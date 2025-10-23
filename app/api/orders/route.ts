@@ -115,13 +115,23 @@ export async function POST(request: NextRequest) {
 
     // Update product stock
     for (const item of items) {
-      await supabaseAdmin
+      // First get current stock
+      const { data: product } = await supabaseAdmin
         .from('products')
-        .update({
-          stock_count: supabaseAdmin.raw(`stock_count - ${item.quantity}`),
-          in_stock: supabaseAdmin.raw(`CASE WHEN stock_count - ${item.quantity} > 0 THEN true ELSE false END`)
-        })
+        .select('stock_count')
         .eq('id', item.id)
+        .single()
+
+      if (product) {
+        const newStockCount = product.stock_count - item.quantity
+        await supabaseAdmin
+          .from('products')
+          .update({
+            stock_count: newStockCount,
+            in_stock: newStockCount > 0
+          })
+          .eq('id', item.id)
+      }
     }
 
     return NextResponse.json({ order }, { status: 201 })
