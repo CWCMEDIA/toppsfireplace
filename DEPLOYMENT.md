@@ -62,9 +62,9 @@ After your domain is live, update Stripe webhook:
 
 #### 1. JWT_SECRET
 - **Key:** `JWT_SECRET`
-- **Value:** `fO3KSJcnvR5D00niafGfdhpKzL1jJyy66f0KVhy2dlg=`
+- **Value:** Generate using `openssl rand -base64 32` (see SECURITY.md)
 - **Sensitive:** ✅ Yes
-- **Environments:** Production, Preview, Development
+- **Environments:** Production, Preview (Development not allowed for sensitive variables)
 
 #### 2. NEXT_PUBLIC_SUPABASE_URL
 - **Key:** `NEXT_PUBLIC_SUPABASE_URL`

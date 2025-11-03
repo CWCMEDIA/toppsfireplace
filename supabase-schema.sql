@@ -161,11 +161,14 @@ CREATE POLICY "Customers can view their own orders" ON orders FOR SELECT USING (
   customer_email = auth.email()
 );
 
--- Insert default admin user (password: admin123)
--- Note: In production, you should change this password immediately
+-- Insert default admin user
+-- NOTE: Generate your own password hash for production!
+-- Use: SELECT crypt('your-password-here', gen_salt('bf', 12));
+-- Or use bcrypt in Node.js: bcrypt.hashSync('your-password', 12)
+-- IMPORTANT: Change the default password in production!
 INSERT INTO users (email, password_hash, role) VALUES (
   'admin@topsfireplaces.com',
-  '$2a$12$nA5sgW3PTEZfRrNVeA.1XuyzCjJk.b6GHD4gpOg.3n6aSDXC2ws9K', -- admin123
+  '$2a$12$REPLACE_WITH_YOUR_OWN_HASH_HERE', -- Replace with your own bcrypt hash
   'admin'
 );
 

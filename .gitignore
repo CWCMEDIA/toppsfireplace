@@ -26,7 +26,10 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+.env
 .env*.local
+.env.production
+.env.development
 
 # vercel
 .vercel
@@ -43,3 +46,37 @@ next-env.d.ts
 
 # OS
 Thumbs.db
+
+# Sensitive SQL files with actual data or credentials (keep schema files)
+bulk-insert-*.sql
+add-*.sql
+*-data.sql
+*-insert.sql
+update-*.sql
+*-credentials.sql
+
+# Backup and temporary files
+*.bak
+*.tmp
+*.backup
+*~
+
+# Cookies and session files
+cookies.txt
+*.session
+
+# Database dumps
+*.dump
+*.sql.gz
+*.sql.bak
+
+# Secrets and credentials
+secrets.json
+credentials.json
+*.key
+*.crt
+*.cert
+
+# Logs
+*.log
+logs/

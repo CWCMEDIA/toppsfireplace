@@ -55,9 +55,7 @@ A modern, responsive e-commerce website for Tops Fireplaces, featuring a beautif
 To access the admin panel:
 
 1. Navigate to `/admin-login`
-2. Use the demo credentials:
-   - **Username**: `admin`
-   - **Password**: `admin123`
+2. Contact the administrator for login credentials
 
 ## 📁 Project Structure
 

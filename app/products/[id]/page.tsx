@@ -24,45 +24,13 @@ import { Product } from '@/lib/types'
 import { addToCart } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
-const relatedProducts = [
-  {
-    id: 2,
-    name: 'Modern Marble Electric Fire',
-    price: 899,
-    originalPrice: 1099,
-    image: '/api/placeholder/300/200',
-    category: 'marble',
-    rating: 4.9,
-    reviews: 18,
-  },
-  {
-    id: 3,
-    name: 'Rustic Granite Wood Stove',
-    price: 1899,
-    originalPrice: 2199,
-    image: '/api/placeholder/300/200',
-    category: 'granite',
-    rating: 4.7,
-    reviews: 31,
-  },
-  {
-    id: 4,
-    name: 'Elegant Travertine Fireplace',
-    price: 1599,
-    originalPrice: 1899,
-    image: '/api/placeholder/300/200',
-    category: 'travertine',
-    rating: 4.6,
-    reviews: 22,
-  },
-]
-
 export default function ProductDetailPage() {
   const params = useParams()
   const productId = params.id as string
   
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
+  const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
   const [selectedImage, setSelectedImage] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
@@ -76,6 +44,11 @@ export default function ProductDetailPage() {
         if (response.ok) {
           const data = await response.json()
           setProduct(data.product)
+          
+          // Fetch related products after product is loaded
+          if (data.product) {
+            fetchRelatedProducts(productId)
+          }
         } else {
           setProduct(null)
         }
@@ -84,6 +57,19 @@ export default function ProductDetailPage() {
         setProduct(null)
       } finally {
         setLoading(false)
+      }
+    }
+
+    const fetchRelatedProducts = async (id: string) => {
+      try {
+        const response = await fetch(`/api/products/related?productId=${id}`)
+        if (response.ok) {
+          const data = await response.json()
+          setRelatedProducts(data.products || [])
+        }
+      } catch (error) {
+        console.error('Error fetching related products:', error)
+        setRelatedProducts([])
       }
     }
 
@@ -494,62 +480,80 @@ export default function ProductDetailPage() {
         </div>
 
         {/* Related Products */}
-        <div className="mt-16">
-          <h3 className="text-2xl font-bold text-secondary-800 mb-8">You Might Also Like</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {relatedProducts.map((relatedProduct) => (
-              <motion.div
-                key={relatedProduct.id}
-                whileHover={{ scale: 1.02 }}
-                className="card group hover:shadow-xl transition-shadow duration-300"
-              >
-                <div className="aspect-w-4 aspect-h-3 bg-secondary-100 rounded-t-xl overflow-hidden">
-                  <div className="w-full h-48 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
-                    <span className="text-secondary-500">Product Image</span>
-                  </div>
-                </div>
-                <div className="p-6">
-                  <h4 className="text-lg font-semibold text-secondary-800 mb-2 group-hover:text-primary-600 transition-colors duration-200">
-                    {relatedProduct.name}
-                  </h4>
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(relatedProduct.rating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-secondary-300'
-                          }`}
+        {relatedProducts.length > 0 && (
+          <div className="mt-16">
+            <h3 className="text-2xl font-bold text-secondary-800 mb-8">You Might Also Like</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {relatedProducts.map((relatedProduct) => (
+                <motion.div
+                  key={relatedProduct.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5 }}
+                  whileHover={{ scale: 1.02 }}
+                  className="card group hover:shadow-xl transition-shadow duration-300"
+                >
+                  <Link href={`/products/${relatedProduct.id}`}>
+                    <div className="aspect-w-4 aspect-h-3 bg-secondary-100 rounded-t-xl overflow-hidden relative">
+                      {relatedProduct.images && relatedProduct.images.length > 0 ? (
+                        <Image
+                          src={relatedProduct.images[0]}
+                          alt={relatedProduct.name}
+                          fill
+                          className="object-cover group-hover:scale-105 transition-transform duration-300"
                         />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-secondary-600">
-                      {relatedProduct.rating} ({relatedProduct.reviews})
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xl font-bold text-primary-600">£{relatedProduct.price}</span>
-                      {relatedProduct.originalPrice > relatedProduct.price && (
-                        <span className="text-sm text-secondary-500 line-through">
-                          £{relatedProduct.originalPrice}
-                        </span>
+                      ) : (
+                        <div className="w-full h-48 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
+                          <span className="text-secondary-500">Product Image</span>
+                        </div>
                       )}
                     </div>
-                    <Link
-                      href={`/products/${relatedProduct.id}`}
-                      className="btn-primary text-sm px-4 py-2"
-                    >
-                      View
+                  </Link>
+                  <div className="p-6">
+                    <Link href={`/products/${relatedProduct.id}`}>
+                      <h4 className="text-lg font-semibold text-secondary-800 mb-2 group-hover:text-primary-600 transition-colors duration-200">
+                        {relatedProduct.name}
+                      </h4>
                     </Link>
+                    <div className="flex items-center mb-3">
+                      <div className="flex items-center">
+                        {[...Array(5)].map((_, i) => (
+                          <Star
+                            key={i}
+                            className={`w-4 h-4 ${
+                              i < Math.floor(relatedProduct.rating || 0)
+                                ? 'text-yellow-400 fill-current'
+                                : 'text-secondary-300'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                      <span className="ml-2 text-sm text-secondary-600">
+                        {relatedProduct.rating?.toFixed(1) || '0.0'} ({relatedProduct.review_count || 0} reviews)
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className="text-xl font-bold text-primary-600">£{relatedProduct.price.toLocaleString()}</span>
+                        {relatedProduct.original_price && relatedProduct.original_price > 0 && relatedProduct.original_price > relatedProduct.price && (
+                          <span className="text-sm text-secondary-500 line-through">
+                            £{relatedProduct.original_price.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      <Link
+                        href={`/products/${relatedProduct.id}`}
+                        className="btn-primary text-sm px-4 py-2"
+                      >
+                        View
+                      </Link>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )

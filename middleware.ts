@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fO3KSJcnvR5D00niafGfdhpKzL1jJyy66f0KVhy2dlg='
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('Missing required JWT_SECRET environment variable')
+}
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('admin-token')?.value

@@ -29,7 +29,13 @@ export async function createAdminUser(email: string, password: string) {
   return data
 }
 
-export async function authenticateAdmin(email: string, password: string) {
+export async function authenticateAdmin(usernameOrEmail: string, password: string) {
+  // Support both username "Dave" and email "dave@topsfireplaces.com"
+  // Map "Dave" to "dave@topsfireplaces.com" for database lookup
+  const email = usernameOrEmail.toLowerCase() === 'dave' 
+    ? 'dave@topsfireplaces.com' 
+    : usernameOrEmail.toLowerCase()
+
   const { data, error } = await supabaseAdmin
     .from('users')
     .select('*')

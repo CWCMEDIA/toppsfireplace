@@ -2,7 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { jwtVerify } from 'jose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fO3KSJcnvR5D00niafGfdhpKzL1jJyy66f0KVhy2dlg='
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('Missing required JWT_SECRET environment variable')
+}
 
 // Helper function to verify admin authentication
 async function verifyAdmin(request: NextRequest) {

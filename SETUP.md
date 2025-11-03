@@ -70,11 +70,9 @@ NEXT_PUBLIC_SITE_NAME="Tops Fireplaces"
 
 ### 4. Admin User Setup
 
-The database schema includes a default admin user:
-- **Email:** admin@topsfireplaces.com
-- **Password:** admin123
+**⚠️ IMPORTANT:** Admin credentials are managed securely in the database.
 
-**⚠️ IMPORTANT:** Change this password immediately in production!
+For production, contact the administrator to set up admin access.
 
 To create a new admin user, you can use the Supabase dashboard or create a script.
 

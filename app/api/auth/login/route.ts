@@ -2,17 +2,24 @@ import { NextRequest, NextResponse } from 'next/server'
 import { authenticateAdmin } from '@/lib/auth'
 import { SignJWT } from 'jose'
 
-const JWT_SECRET = process.env.JWT_SECRET || 'fO3KSJcnvR5D00niafGfdhpKzL1jJyy66f0KVhy2dlg='
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('Missing required JWT_SECRET environment variable')
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    const { email, password, username } = await request.json()
+    
+    // Support both 'email' and 'username' fields from frontend
+    const usernameOrEmail = username || email
 
-    if (!email || !password) {
-      return NextResponse.json({ error: 'Email and password required' }, { status: 400 })
+    if (!usernameOrEmail || !password) {
+      return NextResponse.json({ error: 'Username and password required' }, { status: 400 })
     }
 
-    const user = await authenticateAdmin(email, password)
+    const user = await authenticateAdmin(usernameOrEmail, password)
     
     if (!user) {
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 })

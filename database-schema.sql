@@ -138,9 +138,12 @@ CREATE TABLE settings (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default admin user (password: admin123)
+-- Insert default admin user
+-- NOTE: Generate your own password hash for production!
+-- Use bcrypt in Node.js: bcrypt.hashSync('your-password', 12)
+-- IMPORTANT: Change the default password in production!
 INSERT INTO users (username, email, password_hash, first_name, last_name, role) 
-VALUES ('admin', 'admin@topsfireplaces.com', '$2a$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', 'Admin', 'User', 'admin');
+VALUES ('admin', 'admin@topsfireplaces.com', '$2a$12$REPLACE_WITH_YOUR_OWN_HASH_HERE', 'Admin', 'User', 'admin');
 
 -- Insert default categories
 INSERT INTO categories (name, slug, description, sort_order) VALUES

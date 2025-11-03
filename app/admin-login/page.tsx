@@ -28,7 +28,7 @@ export default function AdminLoginPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: formData.username,
+          username: formData.username,
           password: formData.password,
         }),
       })
@@ -90,19 +90,19 @@ export default function AdminLoginPage() {
 
             <div>
               <label htmlFor="username" className="block text-sm font-medium text-secondary-700 mb-2">
-                Email
+                Username
               </label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-secondary-400" />
                 <input
-                  type="email"
+                  type="text"
                   id="username"
                   name="username"
                   value={formData.username}
                   onChange={handleChange}
                   required
                   className="w-full pl-10 pr-4 py-3 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent transition-all duration-200"
-                  placeholder="Enter your email"
+                  placeholder="Enter your username"
                 />
               </div>
             </div>
@@ -146,11 +146,11 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Demo Credentials */}
+          {/* Admin Credentials */}
           <div className="mt-8 p-4 bg-secondary-50 rounded-lg">
             <h3 className="text-sm font-medium text-secondary-800 mb-2">Admin Credentials:</h3>
-            <p className="text-sm text-secondary-600">Email: admin@topsfireplaces.com</p>
-            <p className="text-sm text-secondary-600">Password: admin123</p>
+            <p className="text-sm text-secondary-600">Username: Dave</p>
+            <p className="text-sm text-secondary-600">Password: [Contact administrator]</p>
           </div>
 
           {/* Back to Site */}
