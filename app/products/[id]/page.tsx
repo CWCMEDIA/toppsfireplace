@@ -21,6 +21,8 @@ import {
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Product } from '@/lib/types'
+import { addToCart } from '@/lib/cart'
+import toast from 'react-hot-toast'
 
 const relatedProducts = [
   {
@@ -240,14 +242,14 @@ export default function ProductDetailPage() {
 
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
-                <span className="text-3xl font-bold text-primary-600">£{product.price}</span>
-                {product.original_price && product.original_price > product.price && (
+                <span className="text-3xl font-bold text-primary-600">£{product.price.toLocaleString()}</span>
+                {product.original_price && product.original_price > 0 && product.original_price > product.price && (
                   <>
                     <span className="text-xl text-secondary-500 line-through">
-                      £{product.original_price}
+                      £{product.original_price.toLocaleString()}
                     </span>
                     <span className="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm font-medium">
-                      Save £{product.original_price - product.price}
+                      Save £{(product.original_price - product.price).toLocaleString()}
                     </span>
                   </>
                 )}
@@ -294,6 +296,14 @@ export default function ProductDetailPage() {
 
               <div className="flex space-x-4">
                 <button
+                  onClick={() => {
+                    if (!product.in_stock) {
+                      toast.error('This product is currently out of stock')
+                      return
+                    }
+                    addToCart(product, quantity)
+                    toast.success(`${quantity} ${quantity === 1 ? 'item' : 'items'} added to cart!`)
+                  }}
                   disabled={!product.in_stock}
                   className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 >

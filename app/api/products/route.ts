@@ -47,10 +47,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
+    // Handle original_price explicitly - set to null if undefined/0/empty
+    const originalPrice = otherFields.original_price && otherFields.original_price > 0
+      ? parseFloat(otherFields.original_price)
+      : null
+
+    const { original_price, ...restFields } = otherFields // Remove original_price from otherFields
+
     const productData: Partial<Product> = {
       name,
       description,
       price: parseFloat(price),
+      original_price: originalPrice,
       category,
       material,
       fuel_type,
@@ -60,7 +68,7 @@ export async function POST(request: NextRequest) {
       stock_count: 0,
       in_stock: false,
       status: 'active',
-      ...otherFields
+      ...restFields
     }
 
     const { data, error } = await supabaseAdmin

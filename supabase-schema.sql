@@ -36,6 +36,7 @@ CREATE TABLE products (
   review_count INTEGER DEFAULT 0,
   stock_count INTEGER DEFAULT 0,
   in_stock BOOLEAN DEFAULT false,
+  featured BOOLEAN DEFAULT false,
   status VARCHAR(20) DEFAULT 'active' CHECK (status IN ('active', 'inactive')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
@@ -175,7 +176,7 @@ INSERT INTO orders (order_number, customer_email, customer_name, customer_phone,
 ('ORD-2024-003', 'customer3@example.com', 'Bob Johnson', '01234567892', '{"street": "789 Park Ave", "city": "Colchester", "postcode": "CO1 1CC", "country": "UK"}', 1899.00, 379.80, 50.00, 2328.80, 'shipped', 'paid', 'card', 'pi_test_789');
 
 -- Insert sample products
-INSERT INTO products (name, description, long_description, price, original_price, category, subcategory, material, fuel_type, dimensions, weight, features, specifications, images, badge, stock_count, in_stock, status) VALUES 
+INSERT INTO products (name, description, long_description, price, original_price, category, subcategory, material, fuel_type, dimensions, weight, features, specifications, images, badge, stock_count, in_stock, featured, status) VALUES 
 (
   'Classic Limestone Fireplace',
   'A timeless limestone fireplace that brings elegance to any home.',
@@ -193,6 +194,7 @@ INSERT INTO products (name, description, long_description, price, original_price
   ARRAY['/images/products/limestone-fireplace-1.jpg', '/images/products/limestone-fireplace-2.jpg'],
   'Best Seller',
   5,
+  true,
   true,
   'active'
 ),
@@ -214,6 +216,7 @@ INSERT INTO products (name, description, long_description, price, original_price
   'New',
   8,
   true,
+  true,
   'active'
 ),
 (
@@ -234,5 +237,6 @@ INSERT INTO products (name, description, long_description, price, original_price
   'Premium',
   3,
   true,
+  false,
   'active'
 );

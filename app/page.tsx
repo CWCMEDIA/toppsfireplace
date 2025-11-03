@@ -6,43 +6,7 @@ import Image from 'next/image'
 import { ArrowRight, Star, Shield, Truck, Award, CheckCircle, Phone } from 'lucide-react'
 import { motion } from 'framer-motion'
 import LoadingSpinner from '@/components/LoadingSpinner'
-
-// Sample product data - this would come from your database
-const featuredProducts = [
-  {
-    id: 1,
-    name: 'Classic Limestone Fireplace',
-    price: 1299,
-    originalPrice: 1599,
-    image: '/api/placeholder/400/300',
-    category: 'limestone',
-    rating: 4.8,
-    reviews: 24,
-    badge: 'Best Seller',
-  },
-  {
-    id: 2,
-    name: 'Modern Marble Electric Fire',
-    price: 899,
-    originalPrice: 1099,
-    image: '/api/placeholder/400/300',
-    category: 'marble',
-    rating: 4.9,
-    reviews: 18,
-    badge: 'New',
-  },
-  {
-    id: 3,
-    name: 'Rustic Granite Wood Stove',
-    price: 1899,
-    originalPrice: 2199,
-    image: '/api/placeholder/400/300',
-    category: 'granite',
-    rating: 4.7,
-    reviews: 31,
-    badge: 'Premium',
-  },
-]
+import { Product } from '@/lib/types'
 
 const testimonials = [
   {
@@ -92,20 +56,26 @@ const features = [
 ]
 
 export default function HomePage() {
-  const [isLoading, setIsLoading] = useState(true)
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false)
-    }, 1000)
+    const fetchFeaturedProducts = async () => {
+      try {
+        const response = await fetch('/api/products/featured')
+        if (response.ok) {
+          const data = await response.json()
+          setFeaturedProducts(data.products)
+        }
+      } catch (error) {
+        console.error('Error fetching featured products:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    return () => clearTimeout(timer)
+    fetchFeaturedProducts()
   }, [])
-
-  if (isLoading) {
-    return <LoadingSpinner text="Loading your perfect fireplace..." />
-  }
 
   return (
     <div className="min-h-screen">
@@ -220,8 +190,13 @@ export default function HomePage() {
             </p>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProducts.map((product, index) => (
+          {loading ? (
+            <div className="flex justify-center py-12">
+              <LoadingSpinner />
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {featuredProducts.map((product, index) => (
               <motion.div
                 key={product.id}
                 initial={{ opacity: 0, y: 30 }}
@@ -232,9 +207,19 @@ export default function HomePage() {
               >
                 <div className="relative overflow-hidden">
                   <div className="aspect-w-4 aspect-h-3 bg-secondary-100">
-                    <div className="w-full h-64 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
-                      <span className="text-secondary-500 text-lg">Fireplace Image</span>
-                    </div>
+                    {product.images && product.images.length > 0 ? (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.name}
+                        width={400}
+                        height={300}
+                        className="w-full h-64 object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="w-full h-64 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
+                        <span className="text-secondary-500 text-lg">Fireplace Image</span>
+                      </div>
+                    )}
                   </div>
                   {product.badge && (
                     <div className="absolute top-4 left-4 bg-primary-600 text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -265,22 +250,22 @@ export default function HomePage() {
                       ))}
                     </div>
                     <span className="ml-2 text-sm text-secondary-600">
-                      {product.rating} ({product.reviews} reviews)
+                      {product.rating} ({product.review_count} reviews)
                     </span>
                   </div>
                   
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-primary-600">£{product.price}</span>
-                      {product.originalPrice > product.price && (
+                      <span className="text-2xl font-bold text-primary-600">£{product.price.toLocaleString()}</span>
+                      {product.original_price && product.original_price > 0 && product.original_price > product.price && (
                         <span className="text-lg text-secondary-500 line-through">
-                          £{product.originalPrice}
+                          £{product.original_price.toLocaleString()}
                         </span>
                       )}
                     </div>
-                    {product.originalPrice > product.price && (
+                    {product.original_price && product.original_price > 0 && product.original_price > product.price && (
                       <span className="text-sm bg-red-100 text-red-600 px-2 py-1 rounded">
-                        Save £{product.originalPrice - product.price}
+                        Save £{(product.original_price - product.price).toLocaleString()}
                       </span>
                     )}
                   </div>
@@ -294,7 +279,8 @@ export default function HomePage() {
                 </div>
               </motion.div>
             ))}
-          </div>
+            </div>
+          )}
 
           <div className="text-center mt-12">
             <Link href="/products" className="group relative inline-flex items-center text-lg px-8 py-4 border-2 border-primary-600 text-primary-600 hover:bg-primary-600 hover:text-white transition-all duration-300 rounded-lg font-medium">

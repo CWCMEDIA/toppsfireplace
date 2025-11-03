@@ -1,72 +1,10 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Search, Filter, Grid, List, Eye, Heart } from 'lucide-react'
-
-// Sample gallery data
-const galleryItems = [
-  {
-    id: 1,
-    title: 'Classic Limestone Installation',
-    category: 'limestone',
-    type: 'installation',
-    image: '/api/placeholder/400/300',
-    description: 'Beautiful limestone fireplace installation in a traditional Victorian home.',
-    location: 'Benfleet, Essex',
-    year: '2024',
-  },
-  {
-    id: 2,
-    title: 'Modern Marble Suite',
-    category: 'marble',
-    type: 'fireplace',
-    image: '/api/placeholder/400/300',
-    description: 'Contemporary marble electric fire suite with LED lighting.',
-    location: 'Westcliff-on-Sea, Essex',
-    year: '2024',
-  },
-  {
-    id: 3,
-    title: 'Rustic Granite Stove',
-    category: 'granite',
-    type: 'stove',
-    image: '/api/placeholder/400/300',
-    description: 'Heavy-duty granite wood burning stove in a country cottage.',
-    location: 'Hockley, Essex',
-    year: '2023',
-  },
-  {
-    id: 4,
-    title: 'Elegant Travertine Feature',
-    category: 'travertine',
-    type: 'fireplace',
-    image: '/api/placeholder/400/300',
-    description: 'Sophisticated travertine fireplace with natural stone texture.',
-    location: 'Canvey Island, Essex',
-    year: '2024',
-  },
-  {
-    id: 5,
-    title: 'Electric Fire Installation',
-    category: 'electric',
-    type: 'electric',
-    image: '/api/placeholder/400/300',
-    description: 'Modern electric fire installation with realistic flame effects.',
-    location: 'Southend-on-Sea, Essex',
-    year: '2024',
-  },
-  {
-    id: 6,
-    title: 'Cast Iron Stove Setup',
-    category: 'cast-iron',
-    type: 'stove',
-    image: '/api/placeholder/400/300',
-    description: 'Traditional cast iron wood burning stove installation.',
-    location: 'Leigh-on-Sea, Essex',
-    year: '2023',
-  },
-]
+import { Search, Filter, Grid, List, Eye, Heart, X } from 'lucide-react'
+import Image from 'next/image'
+import { GalleryItem } from '@/lib/types'
 
 const categories = [
   { value: 'all', label: 'All Projects' },
@@ -87,11 +25,33 @@ const types = [
 ]
 
 export default function GalleryPage() {
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
+  const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedType, setSelectedType] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
-  const [selectedItem, setSelectedItem] = useState<typeof galleryItems[0] | null>(null)
+  const [selectedItem, setSelectedItem] = useState<GalleryItem | null>(null)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+
+  useEffect(() => {
+    const fetchGalleryItems = async () => {
+      try {
+        const response = await fetch('/api/gallery')
+        if (response.ok) {
+          const data = await response.json()
+          // Filter to only show active items
+          setGalleryItems((data.gallery || []).filter((item: GalleryItem) => item.status === 'active'))
+        }
+      } catch (error) {
+        console.error('Error fetching gallery items:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchGalleryItems()
+  }, [])
 
   const filteredItems = galleryItems.filter(item => {
     const matchesSearch = item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -101,6 +61,17 @@ export default function GalleryPage() {
     const matchesType = selectedType === 'all' || item.type === selectedType
     return matchesSearch && matchesCategory && matchesType
   })
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-secondary-600">Loading gallery...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-secondary-50">
@@ -187,19 +158,32 @@ export default function GalleryPage() {
               className={`card group hover:scale-105 transition-transform duration-300 cursor-pointer ${
                 viewMode === 'list' ? 'flex' : ''
               }`}
-              onClick={() => setSelectedItem(item)}
+              onClick={() => {
+                setSelectedItem(item)
+                setSelectedImageIndex(0)
+              }}
             >
               <div className={`relative overflow-hidden ${viewMode === 'list' ? 'w-1/3' : ''}`}>
-                <div className={`bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center ${
-                  viewMode === 'list' ? 'h-48' : 'aspect-w-4 aspect-h-3 h-64'
-                }`}>
-                  <span className="text-secondary-500 text-lg">Project Image</span>
-                </div>
+                {item.images && item.images.length > 0 ? (
+                  <div className={`relative ${
+                    viewMode === 'list' ? 'h-48' : 'aspect-w-4 aspect-h-3 h-64'
+                  }`}>
+                    <Image
+                      src={item.images[0]}
+                      alt={item.title}
+                      fill
+                      className="object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className={`bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center ${
+                    viewMode === 'list' ? 'h-48' : 'aspect-w-4 aspect-h-3 h-64'
+                  }`}>
+                    <span className="text-secondary-500 text-lg">No Image</span>
+                  </div>
+                )}
                 <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
                   <Eye className="w-8 h-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                </div>
-                <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2">
-                  <Heart className="w-4 h-4 text-secondary-600 hover:text-red-500 cursor-pointer transition-colors duration-200" />
                 </div>
               </div>
               
@@ -236,23 +220,73 @@ export default function GalleryPage() {
 
       {/* Modal */}
       {selectedItem && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setSelectedItem(null)}>
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto"
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto"
           >
             <div className="relative">
-              <div className="aspect-w-16 aspect-h-9 bg-secondary-100">
-                <div className="w-full h-64 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
-                  <span className="text-secondary-500 text-lg">Project Image</span>
+              {selectedItem.images && selectedItem.images.length > 0 ? (
+                <div className="relative w-full h-96 bg-secondary-100">
+                  <Image
+                    src={selectedItem.images[selectedImageIndex]}
+                    alt={selectedItem.title}
+                    fill
+                    className="object-cover"
+                  />
+                  {selectedItem.images.length > 1 && (
+                    <>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImageIndex((prev) => 
+                            prev > 0 ? prev - 1 : selectedItem.images.length - 1
+                          )
+                        }}
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200"
+                      >
+                        ←
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setSelectedImageIndex((prev) => 
+                            prev < selectedItem.images.length - 1 ? prev + 1 : 0
+                          )
+                        }}
+                        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200"
+                      >
+                        →
+                      </button>
+                      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                        {selectedItem.images.map((_, index) => (
+                          <button
+                            key={index}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedImageIndex(index)
+                            }}
+                            className={`w-2 h-2 rounded-full ${
+                              index === selectedImageIndex ? 'bg-white' : 'bg-white/50'
+                            }`}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-              </div>
+              ) : (
+                <div className="w-full h-64 bg-gradient-to-br from-secondary-200 to-secondary-300 flex items-center justify-center">
+                  <span className="text-secondary-500 text-lg">No Image</span>
+                </div>
+              )}
               <button
                 onClick={() => setSelectedItem(null)}
                 className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm rounded-full p-2 hover:bg-white transition-colors duration-200"
               >
-                <Eye className="w-5 h-5 text-secondary-600" />
+                <X className="w-5 h-5 text-secondary-600" />
               </button>
             </div>
             
@@ -274,6 +308,31 @@ export default function GalleryPage() {
                   <p className="text-secondary-600 capitalize">{selectedItem.type}</p>
                 </div>
               </div>
+
+              {/* Thumbnail Gallery */}
+              {selectedItem.images && selectedItem.images.length > 1 && (
+                <div className="mt-6 pt-6 border-t border-secondary-200">
+                  <h3 className="text-sm font-medium text-secondary-700 mb-3">All Images</h3>
+                  <div className="grid grid-cols-4 gap-2">
+                    {selectedItem.images.map((image, index) => (
+                      <button
+                        key={index}
+                        onClick={() => setSelectedImageIndex(index)}
+                        className={`relative aspect-square rounded-lg overflow-hidden border-2 ${
+                          index === selectedImageIndex ? 'border-primary-600' : 'border-transparent'
+                        }`}
+                      >
+                        <Image
+                          src={image}
+                          alt={`${selectedItem.title} ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

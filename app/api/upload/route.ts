@@ -29,9 +29,12 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop()
     const fileName = `${timestamp}-${randomString}.${fileExtension}`
 
+    // Determine bucket based on folder
+    const bucketName = folder === 'gallery' ? 'gallery-images' : 'product-images'
+
     // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage
-      .from('product-images')
+      .from(bucketName)
       .upload(`${folder}/${fileName}`, file, {
         cacheControl: '3600',
         upsert: false
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Get public URL
     const { data: urlData } = supabaseAdmin.storage
-      .from('product-images')
+      .from(bucketName)
       .getPublicUrl(data.path)
 
     return NextResponse.json({

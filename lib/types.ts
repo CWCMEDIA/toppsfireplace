@@ -19,6 +19,7 @@ export interface Product {
   review_count: number
   stock_count: number
   in_stock: boolean
+  featured: boolean
   status: 'active' | 'inactive'
   created_at: string
   updated_at: string
@@ -85,6 +86,20 @@ export interface ContactEnquiry {
   enquiry_type: 'general' | 'quote' | 'installation' | 'maintenance' | 'showroom'
   status: 'new' | 'in_progress' | 'resolved'
   admin_notes?: string
+  created_at: string
+  updated_at: string
+}
+
+export interface GalleryItem {
+  id: string
+  title: string
+  category: string
+  type: 'fireplace' | 'stove' | 'electric' | 'installation'
+  description: string
+  location: string
+  year: string
+  images: string[]
+  status: 'active' | 'inactive'
   created_at: string
   updated_at: string
 }

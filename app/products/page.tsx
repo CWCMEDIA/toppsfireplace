@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Search, Filter, Star, ShoppingCart, Heart, ArrowRight } from 'lucide-react'
 import { Product } from '@/lib/types'
+import { addToCart as addProductToCart } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
 const categories = [
@@ -44,22 +45,7 @@ export default function ProductsPage() {
   }
 
   const addToCart = (product: Product) => {
-    const cart = JSON.parse(localStorage.getItem('cart') || '[]')
-    const existingItem = cart.find((item: any) => item.id === product.id)
-    
-    if (existingItem) {
-      existingItem.quantity += 1
-    } else {
-      cart.push({
-        id: product.id,
-        name: product.name,
-        price: product.price,
-        quantity: 1,
-        image: product.images?.[0] || '/placeholder-product.jpg'
-      })
-    }
-    
-    localStorage.setItem('cart', JSON.stringify(cart))
+    addProductToCart(product, 1)
     toast.success('Added to cart!')
   }
 
@@ -276,7 +262,7 @@ export default function ProductsPage() {
                         <span className="text-2xl font-bold text-secondary-900">
                           £{product.price.toLocaleString()}
                         </span>
-                        {product.original_price && product.original_price > product.price && (
+                        {product.original_price && product.original_price > 0 && product.original_price > product.price && (
                           <span className="text-lg text-secondary-500 line-through">
                             £{product.original_price.toLocaleString()}
                           </span>

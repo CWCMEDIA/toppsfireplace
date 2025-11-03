@@ -18,7 +18,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     description: product?.description || '',
     long_description: product?.long_description || '',
     price: product?.price || 0,
-    original_price: product?.original_price || 0,
+    original_price: product?.original_price || undefined,
     category: product?.category || 'limestone',
     subcategory: product?.subcategory || 'fireplace',
     material: product?.material || '',
@@ -44,7 +44,9 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     const { name, value, type } = e.target
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'number' ? parseFloat(value) || 0 : value
+      [name]: type === 'number' 
+        ? (value === '' || value === '0' ? (name === 'original_price' ? undefined : 0) : parseFloat(value))
+        : value
     }))
   }
 
@@ -130,6 +132,8 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     
     const productData = {
       ...formData,
+      // Only include original_price if it's set and greater than 0
+      original_price: formData.original_price && formData.original_price > 0 ? formData.original_price : undefined,
       images,
       rating: product?.rating || 0,
       review_count: product?.review_count || 0
@@ -280,17 +284,17 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
             </div>
             <div>
               <label className="block text-sm font-medium text-secondary-700 mb-2">
-                Original Price (£)
+                Original Price (£) <span className="text-secondary-500 text-xs font-normal">(Optional - leave empty if no discount)</span>
               </label>
               <input
                 type="number"
                 name="original_price"
-                value={formData.original_price}
+                value={formData.original_price || ''}
                 onChange={handleInputChange}
                 min="0"
                 step="0.01"
                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                placeholder="0.00"
+                placeholder="Leave empty if no discount"
               />
             </div>
             <div>

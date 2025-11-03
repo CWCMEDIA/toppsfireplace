@@ -1,54 +1,65 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import Image from 'next/image'
 import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck } from 'lucide-react'
 import { motion } from 'framer-motion'
-
-// Sample cart data - this would come from your state management
-const cartItems = [
-  {
-    id: 1,
-    name: 'Classic Limestone Fireplace',
-    price: 1299,
-    originalPrice: 1599,
-    image: '/api/placeholder/150/150',
-    quantity: 1,
-    material: 'limestone',
-    fuel: 'gas',
-  },
-  {
-    id: 2,
-    name: 'Modern Marble Electric Fire',
-    price: 899,
-    originalPrice: 1099,
-    image: '/api/placeholder/150/150',
-    quantity: 2,
-    material: 'marble',
-    fuel: 'electric',
-  },
-]
+import { getCart, updateCartItemQuantity, removeFromCart, type CartItem } from '@/lib/cart'
 
 export default function CartPage() {
-  const [items, setItems] = useState(cartItems)
+  const [items, setItems] = useState<CartItem[]>([])
   const [isCheckingOut, setIsCheckingOut] = useState(false)
 
-  const updateQuantity = (id: number, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      removeItem(id)
-      return
+  useEffect(() => {
+    // Load cart from localStorage
+    setItems(getCart())
+  }, [])
+
+  // Listen for storage changes (in case cart is updated from another tab)
+  useEffect(() => {
+    const handleStorageChange = () => {
+      setItems(getCart())
     }
-    setItems(items.map(item => 
-      item.id === id ? { ...item, quantity: newQuantity } : item
-    ))
+    
+    window.addEventListener('storage', handleStorageChange)
+    
+    // Also listen for custom event for same-tab updates
+    const handleCartUpdate = () => {
+      setItems(getCart())
+    }
+    
+    window.addEventListener('cartUpdated', handleCartUpdate)
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('cartUpdated', handleCartUpdate)
+    }
+  }, [])
+
+  const updateQuantity = (id: string, newQuantity: number) => {
+    const updatedCart = updateCartItemQuantity(id, newQuantity)
+    setItems(updatedCart)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('cartUpdated'))
   }
 
-  const removeItem = (id: number) => {
-    setItems(items.filter(item => item.id !== id))
+  const removeItem = (id: string) => {
+    const updatedCart = removeFromCart(id)
+    setItems(updatedCart)
+    
+    // Dispatch event to notify other components
+    window.dispatchEvent(new Event('cartUpdated'))
   }
 
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
-  const savings = items.reduce((sum, item) => sum + ((item.originalPrice - item.price) * item.quantity), 0)
+  const savings = items.reduce((sum, item) => {
+    if (item.original_price && item.original_price > 0 && item.original_price > item.price) {
+      return sum + ((item.original_price - item.price) * item.quantity)
+    }
+    return sum
+  }, 0)
   const delivery = subtotal > 500 ? 0 : 50
   const total = subtotal + delivery
 
@@ -96,36 +107,53 @@ export default function CartPage() {
               >
                 <div className="flex items-center space-x-4">
                   {/* Product Image */}
-                  <div className="w-24 h-24 bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span className="text-secondary-500 text-sm">Image</span>
-                  </div>
+                  <Link href={`/products/${item.id}`} className="w-24 h-24 bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                    {item.image ? (
+                      <Image
+                        src={item.image}
+                        alt={item.name}
+                        fill
+                        className="object-cover"
+                      />
+                    ) : (
+                      <span className="text-secondary-500 text-sm">Image</span>
+                    )}
+                  </Link>
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-lg font-semibold text-secondary-800 mb-1">{item.name}</h3>
-                    <p className="text-sm text-secondary-600 mb-2">{item.material} • {item.fuel}</p>
+                    <Link href={`/products/${item.id}`}>
+                      <h3 className="text-lg font-semibold text-secondary-800 mb-1 hover:text-primary-600 transition-colors">
+                        {item.name}
+                      </h3>
+                    </Link>
+                    {(item.material || item.fuel_type) && (
+                      <p className="text-sm text-secondary-600 mb-2">
+                        {item.material || ''}{item.material && item.fuel_type ? ' • ' : ''}{item.fuel_type || ''}
+                      </p>
+                    )}
                     
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50"
+                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="w-12 text-center font-medium">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50"
+                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <span className="text-lg font-bold text-primary-600">£{item.price}</span>
-                        {item.originalPrice > item.price && (
-                          <span className="text-sm text-secondary-500 line-through">£{item.originalPrice}</span>
+                        <span className="text-lg font-bold text-primary-600">£{item.price.toLocaleString()}</span>
+                        {item.original_price && item.original_price > 0 && item.original_price > item.price && (
+                          <span className="text-sm text-secondary-500 line-through">£{item.original_price.toLocaleString()}</span>
                         )}
                       </div>
                     </div>
@@ -134,7 +162,8 @@ export default function CartPage() {
                   {/* Remove Button */}
                   <button
                     onClick={() => removeItem(item.id)}
-                    className="text-red-500 hover:text-red-700 p-2"
+                    className="text-red-500 hover:text-red-700 p-2 transition-colors"
+                    title="Remove from cart"
                   >
                     <Trash2 className="w-5 h-5" />
                   </button>

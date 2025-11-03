@@ -12,11 +12,13 @@ export const metadata: Metadata = {
   description: 'Quality fireplaces in Southend & Essex. Trustworthy, affordable, dependable. Limestone, marble, granite fireplaces, gas & electric fires, and more.',
   keywords: 'fireplaces, Essex, Southend, limestone, marble, granite, gas fires, electric fires, stoves',
   authors: [{ name: 'Tops Fireplaces Ltd' }],
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://topsfireplaces.shop'),
   openGraph: {
     title: 'Tops Fireplaces - Premium Fireplaces for Essex & Southend',
     description: 'Quality fireplaces in Southend & Essex. Trustworthy, affordable, dependable.',
     type: 'website',
     locale: 'en_GB',
+    url: 'https://topsfireplaces.shop',
   },
 }
 

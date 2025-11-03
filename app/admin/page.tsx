@@ -18,11 +18,14 @@ import {
   Users,
   ShoppingCart,
   TrendingUp,
-  AlertCircle
+  AlertCircle,
+  Star,
+  Image as ImageIcon
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ProductForm from '@/components/ProductForm'
-import { Product } from '@/lib/types'
+import GalleryForm from '@/components/GalleryForm'
+import { Product, GalleryItem } from '@/lib/types'
 import toast from 'react-hot-toast'
 
 // Sample data - this would come from your database
@@ -84,11 +87,15 @@ const sampleProducts = [
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<'products' | 'gallery'>('products')
   const [products, setProducts] = useState<Product[]>([])
+  const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [showAddProduct, setShowAddProduct] = useState(false)
+  const [showAddGalleryItem, setShowAddGalleryItem] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
+  const [editingGalleryItem, setEditingGalleryItem] = useState<GalleryItem | null>(null)
   const [stats, setStats] = useState({
     totalProducts: 0,
     activeProducts: 0,
@@ -106,6 +113,7 @@ export default function AdminDashboard() {
     setIsAuthenticated(true)
     setIsLoading(false)
     fetchProducts()
+    fetchGalleryItems()
     fetchStats()
   }, [])
 
@@ -147,6 +155,16 @@ export default function AdminDashboard() {
     }
   }
 
+  const fetchGalleryItems = async () => {
+    try {
+      const response = await fetch('/api/gallery')
+      const data = await response.json()
+      setGalleryItems(data.gallery || [])
+    } catch (error) {
+      toast.error('Failed to fetch gallery items')
+    }
+  }
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', {
@@ -180,6 +198,36 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleToggleFeatured = async (id: string, featured: boolean) => {
+    try {
+      console.log('Toggling featured for product:', id, 'to:', featured)
+      
+      const response = await fetch(`/api/products/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ featured })
+      })
+
+      console.log('Response status:', response.status)
+      
+      if (response.ok) {
+        const data = await response.json()
+        console.log('Success response:', data)
+        toast.success(featured ? 'Product added to featured' : 'Product removed from featured')
+        fetchProducts()
+      } else {
+        const errorData = await response.json()
+        console.error('Error response:', errorData)
+        toast.error(`Failed to update product: ${errorData.error || 'Unknown error'}`)
+      }
+    } catch (error) {
+      console.error('Network error:', error)
+      toast.error('Failed to update product')
+    }
+  }
+
   const handleSaveProduct = async (productData: Partial<Product>) => {
     try {
       const url = editingProduct ? `/api/products/${editingProduct.id}` : '/api/products'
@@ -205,6 +253,54 @@ export default function AdminDashboard() {
       }
     } catch (error) {
       toast.error('Failed to save product')
+    }
+  }
+
+  const handleSaveGalleryItem = async (galleryData: Partial<GalleryItem>) => {
+    try {
+      const url = editingGalleryItem ? `/api/gallery/${editingGalleryItem.id}` : '/api/gallery'
+      const method = editingGalleryItem ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify(galleryData)
+      })
+
+      if (response.ok) {
+        toast.success(editingGalleryItem ? 'Gallery item updated successfully' : 'Gallery item created successfully')
+        setShowAddGalleryItem(false)
+        setEditingGalleryItem(null)
+        fetchGalleryItems()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to save gallery item')
+      }
+    } catch (error) {
+      toast.error('Failed to save gallery item')
+    }
+  }
+
+  const handleDeleteGalleryItem = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this gallery item?')) return
+
+    try {
+      const response = await fetch(`/api/gallery/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('Gallery item deleted successfully')
+        fetchGalleryItems()
+      } else {
+        toast.error('Failed to delete gallery item')
+      }
+    } catch (error) {
+      toast.error('Failed to delete gallery item')
     }
   }
 
@@ -321,7 +417,42 @@ export default function AdminDashboard() {
           ))}
         </div>
 
+        {/* Tabs */}
+        <div className="bg-white rounded-xl shadow-sm mb-6">
+          <div className="border-b border-secondary-200">
+            <nav className="flex space-x-8 px-6" aria-label="Tabs">
+              <button
+                onClick={() => setActiveTab('products')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'products'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Package className="w-5 h-5" />
+                  <span>Products</span>
+                </div>
+              </button>
+              <button
+                onClick={() => setActiveTab('gallery')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'gallery'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <ImageIcon className="w-5 h-5" />
+                  <span>Gallery</span>
+                </div>
+              </button>
+            </nav>
+          </div>
+        </div>
+
         {/* Products Section */}
+        {activeTab === 'products' && (
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6 border-b border-secondary-200">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
@@ -426,7 +557,7 @@ export default function AdminDashboard() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-secondary-900">£{product.price.toLocaleString()}</div>
-                      {product.original_price && product.original_price > product.price && (
+                      {product.original_price && product.original_price > 0 && product.original_price > product.price && (
                         <div className="text-sm text-secondary-500 line-through">£{product.original_price.toLocaleString()}</div>
                       )}
                     </td>
@@ -462,6 +593,17 @@ export default function AdminDashboard() {
                           <Eye className="w-4 h-4" />
                         </button>
                         <button
+                          onClick={() => handleToggleFeatured(product.id, !product.featured)}
+                          className={`p-1 ${
+                            product.featured 
+                              ? 'text-yellow-600 hover:text-yellow-900' 
+                              : 'text-secondary-400 hover:text-yellow-600'
+                          }`}
+                          title={product.featured ? 'Remove from featured' : 'Add to featured'}
+                        >
+                          <Star className={`w-4 h-4 ${product.featured ? 'fill-current' : ''}`} />
+                        </button>
+                        <button
                           onClick={() => handleDeleteProduct(product.id)}
                           className="text-red-600 hover:text-red-900 p-1"
                         >
@@ -475,6 +617,130 @@ export default function AdminDashboard() {
             </table>
           </div>
         </div>
+        )}
+
+        {/* Gallery Section */}
+        {activeTab === 'gallery' && (
+        <div className="bg-white rounded-xl shadow-sm">
+          <div className="p-6 border-b border-secondary-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-secondary-800">Gallery</h2>
+                <p className="text-secondary-600">Manage your project gallery</p>
+              </div>
+              <button
+                onClick={() => setShowAddGalleryItem(true)}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Gallery Item</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Gallery Table */}
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-secondary-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Item
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Type
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Location
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Year
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-secondary-200">
+                {galleryItems.map((item) => (
+                  <tr key={item.id} className="hover:bg-secondary-50">
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-lg flex items-center justify-center mr-4 overflow-hidden bg-secondary-100">
+                          {item.images && item.images.length > 0 ? (
+                            <img
+                              src={item.images[0]}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <ImageIcon className="w-6 h-6 text-secondary-400" />
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-sm font-medium text-secondary-900">{item.title}</div>
+                          <div className="text-sm text-secondary-500 line-clamp-1">{item.description}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800 capitalize">
+                        {item.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-secondary-900 capitalize">{item.type}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-secondary-900">{item.location}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="text-sm text-secondary-900">{item.year}</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        item.status === 'active'
+                          ? 'bg-green-100 text-green-800'
+                          : 'bg-red-100 text-red-800'
+                      }`}>
+                        {item.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => setEditingGalleryItem(item)}
+                          className="text-primary-600 hover:text-primary-900 p-1"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteGalleryItem(item.id)}
+                          className="text-red-600 hover:text-red-900 p-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {galleryItems.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-6 py-12 text-center text-secondary-500">
+                      No gallery items found. Add your first gallery item to get started.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        )}
       </div>
 
       {/* Add/Edit Product Modal */}
@@ -486,6 +752,18 @@ export default function AdminDashboard() {
             setEditingProduct(null)
           }}
           onSave={handleSaveProduct}
+        />
+      )}
+
+      {/* Add/Edit Gallery Item Modal */}
+      {(showAddGalleryItem || editingGalleryItem) && (
+        <GalleryForm
+          galleryItem={editingGalleryItem}
+          onClose={() => {
+            setShowAddGalleryItem(false)
+            setEditingGalleryItem(null)
+          }}
+          onSave={handleSaveGalleryItem}
         />
       )}
     </div>
