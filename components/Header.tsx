@@ -66,7 +66,7 @@ const Header = () => {
           setSearchResults(filtered)
         }
       } catch (error) {
-        console.error('Error searching products:', error)
+        // Silently handle error - search results will just be empty
         setSearchResults([])
       } finally {
         setIsSearching(false)
@@ -104,15 +104,15 @@ const Header = () => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       {/* Top bar */}
-      <div className="text-white py-2" style={{ backgroundColor: '#827977' }}>
+      <div className="text-white py-2 hidden sm:block" style={{ backgroundColor: '#827977' }}>
         <div className="container-custom">
-          <div className="flex justify-center items-center text-sm">
-            <div className="flex items-center flex-wrap justify-center gap-4">
-              <span>•01702 510222</span>
-              <span>•Over 35 Years Experience</span>
-              <span>•Free Delivery</span>
-              <span>•14 Day Returns</span>
-              <span>•Manufactures Warranty</span>
+          <div className="flex justify-center items-center text-xs sm:text-sm">
+            <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-4">
+              <span className="whitespace-nowrap">•01702 510222</span>
+              <span className="hidden md:inline">•Over 35 Years Experience</span>
+              <span className="whitespace-nowrap">•Free Delivery</span>
+              <span className="hidden lg:inline">•14 Day Returns</span>
+              <span className="hidden lg:inline">•Manufactures Warranty</span>
             </div>
           </div>
         </div>
@@ -120,15 +120,15 @@ const Header = () => {
 
       {/* Main header */}
       <div className="container-custom">
-        <div className="flex items-center justify-between py-4">
+        <div className="flex items-center justify-between py-3 sm:py-4 gap-2 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center">
-            <div className="w-24 h-24 relative overflow-visible">
+          <Link href="/" className="flex items-center flex-shrink-0">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 relative overflow-visible">
               <Image
                 src="/tops.png"
                 alt="Tops Fireplaces"
                 fill
-                className="object-contain scale-[2]"
+                className="object-contain scale-[1.5] sm:scale-[1.75] lg:scale-[2]"
                 priority
               />
             </div>
@@ -150,18 +150,20 @@ const Header = () => {
           </nav>
 
           {/* Search and Cart */}
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200"
+              aria-label="Search"
             >
-              <Search className="w-5 h-5" />
+              <Search className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
             <Link
               href="/cart"
               className="relative p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200"
+              aria-label="Shopping cart"
             >
-              <ShoppingCart className="w-5 h-5" />
+              <ShoppingCart className="w-5 h-5 sm:w-6 sm:h-6" />
               {cartCount > 0 && (
                 <span className="absolute -top-1 -right-1 bg-primary-600 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1.5 font-medium">
                   {cartCount > 99 ? '99+' : cartCount}
@@ -171,6 +173,7 @@ const Header = () => {
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
               className="lg:hidden p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200"
+              aria-label="Menu"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
