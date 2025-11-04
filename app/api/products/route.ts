@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Product } from '@/lib/types'
+import { verifyAdmin } from '@/lib/admin-auth'
 
 // GET /api/products - Get all products
 export async function GET(request: NextRequest) {
@@ -21,7 +22,11 @@ export async function GET(request: NextRequest) {
     }
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,description.ilike.%${search}%,material.ilike.%${search}%`)
+      // Sanitize search input to prevent injection
+      const sanitizedSearch = search.trim().replace(/[%_]/g, '')
+      if (sanitizedSearch) {
+        query = query.or(`name.ilike.%${sanitizedSearch}%,description.ilike.%${sanitizedSearch}%,material.ilike.%${sanitizedSearch}%`)
+      }
     }
 
     const { data, error } = await query
@@ -39,6 +44,12 @@ export async function GET(request: NextRequest) {
 // POST /api/products - Create new product (Admin only)
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
+
     const body = await request.json()
     const { name, description, price, category, material, fuel_type, images, ...otherFields } = body
 

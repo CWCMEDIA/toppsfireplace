@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { verifyAdmin } from '@/lib/admin-auth'
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify admin authentication - only admins can upload files
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
     const formData = await request.formData()
     const file = formData.get('file') as File
     const folder = formData.get('folder') as string || 'products'

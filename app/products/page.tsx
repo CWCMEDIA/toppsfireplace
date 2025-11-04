@@ -38,6 +38,17 @@ function ProductsPageContent() {
     if (searchQuery) {
       setSearchTerm(searchQuery)
     }
+    
+    // Read category from URL
+    const categoryParam = searchParams.get('category')
+    if (categoryParam) {
+      // Validate category exists in our categories list
+      const validCategory = categories.find(cat => cat.id === categoryParam)
+      if (validCategory) {
+        setSelectedCategory(categoryParam)
+      }
+    }
+    
     fetchProducts()
     fetchBrands()
   }, [searchParams])

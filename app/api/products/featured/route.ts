@@ -12,13 +12,11 @@ export async function GET(request: NextRequest) {
       .limit(6)
 
     if (error) {
-      console.error('Error fetching featured products:', error)
       return NextResponse.json({ error: 'Failed to fetch featured products' }, { status: 500 })
     }
 
     return NextResponse.json({ products })
   } catch (error) {
-    console.error('Error in featured products API:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

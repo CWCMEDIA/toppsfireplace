@@ -31,13 +31,19 @@ export async function GET(request: NextRequest) {
     // Only show active products
 
     // Build OR conditions for Supabase
+    // Values come from database (safe), but we validate for extra security
     const orConditions: string[] = []
-    orConditions.push(`category.eq.${currentProduct.category}`)
-    orConditions.push(`material.eq.${currentProduct.material}`)
-    orConditions.push(`fuel_type.eq.${currentProduct.fuel_type}`)
-    
+    if (currentProduct.category) {
+      orConditions.push(`category.eq.${currentProduct.category.replace(/[^a-z0-9-]/gi, '')}`)
+    }
+    if (currentProduct.material) {
+      orConditions.push(`material.eq.${currentProduct.material.replace(/[^a-z0-9-]/gi, '')}`)
+    }
+    if (currentProduct.fuel_type) {
+      orConditions.push(`fuel_type.eq.${currentProduct.fuel_type.replace(/[^a-z0-9-]/gi, '')}`)
+    }
     if (currentProduct.subcategory) {
-      orConditions.push(`subcategory.eq.${currentProduct.subcategory}`)
+      orConditions.push(`subcategory.eq.${currentProduct.subcategory.replace(/[^a-z0-9-]/gi, '')}`)
     }
 
     const { data: relatedProducts, error } = await supabaseAdmin
@@ -50,7 +56,6 @@ export async function GET(request: NextRequest) {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error fetching related products:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
@@ -91,7 +96,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({ products: sortedProducts })
   } catch (error) {
-    console.error('API error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

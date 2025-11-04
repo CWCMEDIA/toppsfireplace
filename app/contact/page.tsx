@@ -342,13 +342,38 @@ export default function ContactPage() {
                 Visit our showroom to see our full range of fireplaces and get expert advice.
               </p>
             </div>
-            <div className="h-96 bg-secondary-200 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-12 h-12 text-secondary-400 mx-auto mb-4" />
-                <p className="text-secondary-600">Interactive Map Coming Soon</p>
-                <p className="text-sm text-secondary-500 mt-2">
-                  332 Bridgwater Drive, Westcliff-on-Sea, Essex, SS0 0EZ
-                </p>
+            <div className="h-96 w-full relative overflow-hidden rounded-b-2xl">
+              <iframe
+                src="https://www.google.com/maps?q=332+Bridgwater+Drive,+Westcliff-on-Sea,+Essex,+SS0+0EZ&output=embed"
+                width="100%"
+                height="100%"
+                style={{ border: 0 }}
+                allowFullScreen
+                loading="lazy"
+                referrerPolicy="no-referrer-when-downgrade"
+                title="Tops Fireplaces Location - 332 Bridgwater Drive, Westcliff-on-Sea, Essex, SS0 0EZ"
+                className="w-full h-full"
+              />
+              <div className="absolute bottom-4 left-4 bg-white rounded-lg shadow-lg p-3 max-w-xs z-10">
+                <div className="flex items-start space-x-2">
+                  <MapPin className="w-5 h-5 text-primary-600 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-secondary-800">Tops Fireplaces</p>
+                    <p className="text-xs text-secondary-600 mt-1">
+                      332 Bridgwater Drive<br />
+                      Westcliff-on-Sea, Essex<br />
+                      SS0 0EZ
+                    </p>
+                    <a
+                      href="https://www.google.com/maps/dir/?api=1&destination=332+Bridgwater+Drive,+Westcliff-on-Sea,+Essex,+SS0+0EZ"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary-600 hover:text-primary-700 mt-2 inline-block font-medium"
+                    >
+                      Get Directions →
+                    </a>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

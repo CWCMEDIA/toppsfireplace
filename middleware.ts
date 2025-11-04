@@ -14,7 +14,6 @@ export async function middleware(request: NextRequest) {
   if (
     request.nextUrl.pathname.startsWith('/api/auth/login') ||
     request.nextUrl.pathname.startsWith('/api/products') ||
-    request.nextUrl.pathname.startsWith('/api/upload') ||
     request.nextUrl.pathname.startsWith('/api/stripe') ||
     request.nextUrl.pathname === '/admin-login' ||
     request.nextUrl.pathname === '/' ||
@@ -23,6 +22,11 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/contact')
   ) {
     return NextResponse.next()
+  }
+  
+  // Protect upload route - requires admin authentication (handled by route itself)
+  if (request.nextUrl.pathname.startsWith('/api/upload')) {
+    return NextResponse.next() // Route will handle admin verification
   }
 
   // Protect admin routes

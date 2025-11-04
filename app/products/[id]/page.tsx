@@ -7,8 +7,6 @@ import Link from 'next/link'
 import { 
   Star, 
   ShoppingCart, 
-  Heart, 
-  Share2, 
   Truck, 
   Shield, 
   Award, 
@@ -16,8 +14,7 @@ import {
   ArrowLeft,
   Plus,
   Minus,
-  Phone,
-  Edit
+  Phone
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Product } from '@/lib/types'
@@ -34,8 +31,6 @@ export default function ProductDetailPage() {
   const [selectedMedia, setSelectedMedia] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
-  const [isWishlisted, setIsWishlisted] = useState(false)
-  const [isAdmin, setIsAdmin] = useState(false)
 
   // Combine images and videos into a single media array
   const mediaItems = product ? [
@@ -80,23 +75,8 @@ export default function ProductDetailPage() {
       }
     }
 
-    const checkAdminStatus = async () => {
-      try {
-        const response = await fetch('/api/auth/verify', {
-          credentials: 'include'
-        })
-        if (response.ok) {
-          const data = await response.json()
-          setIsAdmin(data.valid && data.user?.role === 'admin')
-        }
-      } catch (error) {
-        console.error('Error checking admin status:', error)
-      }
-    }
-
     if (productId) {
       fetchProduct()
-      checkAdminStatus()
     }
   }, [productId])
 
@@ -143,15 +123,6 @@ export default function ProductDetailPage() {
               <span className="text-secondary-400">/</span>
               <span className="text-secondary-800 font-medium">{product.name}</span>
             </nav>
-            {isAdmin && (
-              <Link
-                href={`/admin?edit=${product.id}`}
-                className="flex items-center space-x-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors duration-200"
-              >
-                <Edit className="w-4 h-4" />
-                <span>Edit Product</span>
-              </Link>
-            )}
           </div>
         </div>
       </div>
@@ -311,19 +282,10 @@ export default function ProductDetailPage() {
                     toast.success(`${quantity} ${quantity === 1 ? 'item' : 'items'} added to cart!`)
                   }}
                   disabled={!product.in_stock}
-                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary flex-1 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-3"
                 >
-                  <ShoppingCart className="w-5 h-5 mr-2" />
-                  Add to Cart
-                </button>
-                <button
-                  onClick={() => setIsWishlisted(!isWishlisted)}
-                  className={`btn-secondary ${isWishlisted ? 'text-red-500' : ''}`}
-                >
-                  <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
-                </button>
-                <button className="btn-secondary">
-                  <Share2 className="w-5 h-5" />
+                  <ShoppingCart className="w-6 h-6 flex-shrink-0" />
+                  <span>Add to Cart</span>
                 </button>
               </div>
             </div>

@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { verifyAdmin } from '@/lib/admin-auth'
 
 export async function GET(request: NextRequest) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
     // Get total products
     const { count: totalProducts } = await supabaseAdmin
       .from('products')
@@ -65,7 +71,6 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(stats)
   } catch (error) {
-    console.error('Error fetching admin stats:', error)
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
   }
 }

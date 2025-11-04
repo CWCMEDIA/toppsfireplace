@@ -10,16 +10,9 @@ const Footer = () => {
       { name: 'Limestone Fireplaces', href: '/products?category=limestone' },
       { name: 'Marble Fireplaces', href: '/products?category=marble' },
       { name: 'Granite Fireplaces', href: '/products?category=granite' },
-      { name: 'Gas Fires', href: '/products?category=gas-electric' },
-      { name: 'Electric Fires', href: '/products?category=gas-electric' },
-      { name: 'Wood Stoves', href: '/products?category=stoves' },
-    ],
-    services: [
-      { name: 'Installation Service', href: '/services/installation' },
-      { name: 'Home Assessment', href: '/services/assessment' },
-      { name: 'Maintenance', href: '/services/maintenance' },
-      { name: 'Repairs', href: '/services/repairs' },
-      { name: 'Showroom Visit', href: '/showroom' },
+      { name: 'Gas Fires', href: '/products?category=electric' },
+      { name: 'Electric Fires', href: '/products?category=electric' },
+      { name: 'Wood Stoves', href: '/products?category=wood' },
     ],
     company: [
       { name: 'About Us', href: '/about' },
@@ -30,9 +23,6 @@ const Footer = () => {
     ],
     support: [
       { name: 'FAQ', href: '/faq' },
-      { name: 'Size Guide', href: '/size-guide' },
-      { name: 'Installation Guide', href: '/installation-guide' },
-      { name: 'Care Instructions', href: '/care-instructions' },
       { name: 'Warranty', href: '/warranty' },
     ],
   }
@@ -41,7 +31,7 @@ const Footer = () => {
     <footer className="bg-secondary-700 text-white">
       {/* Main footer content */}
       <div className="container-custom section-padding">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           {/* Company Info */}
           <div className="lg:col-span-2">
             <div className="flex items-center space-x-3 mb-6">
@@ -107,23 +97,6 @@ const Footer = () => {
             </ul>
           </div>
 
-          {/* Services */}
-          <div>
-            <h4 className="text-lg font-semibold mb-4">Services</h4>
-            <ul className="space-y-2">
-              {footerLinks.services.map((link) => (
-                <li key={link.name}>
-                  <Link
-                    href={link.href}
-                    className="text-secondary-300 hover:text-primary-500 transition-colors duration-200"
-                  >
-                    {link.name}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
           {/* Support */}
           <div>
             <h4 className="text-lg font-semibold mb-4">Support</h4>
@@ -149,6 +122,17 @@ const Footer = () => {
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-secondary-400 text-sm">
               © {currentYear} Tops Fireplaces Ltd. All rights reserved.
+            </div>
+            <div className="text-secondary-400 text-sm text-center">
+              Created by:{' '}
+              <a 
+                href="https://www.mediacwc.com" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-500 hover:text-primary-400 transition-colors duration-200"
+              >
+                MediaCWC
+              </a>
             </div>
             <div className="flex space-x-6 text-sm">
               <Link href="/privacy" className="text-secondary-400 hover:text-primary-500 transition-colors duration-200">

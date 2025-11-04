@@ -55,6 +55,10 @@ add-*.sql
 update-*.sql
 *-credentials.sql
 
+# Migration files (may contain sensitive data)
+add-brands-migration.sql
+add-videos-migration.sql
+
 # Backup and temporary files
 *.bak
 *.tmp

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
+import { verifyAdmin } from '@/lib/admin-auth'
 
 // GET /api/products/[id] - Get single product
 export async function GET(
@@ -29,6 +30,12 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
+
     const body = await request.json()
     const { id, original_price, dimensions, weight, specifications, ...updateData } = body
 
@@ -75,9 +82,13 @@ export async function PATCH(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
+
     const body = await request.json()
-    console.log('PATCH request body:', body)
-    console.log('Product ID:', params.id)
 
     const { data, error } = await supabaseAdmin
       .from('products')
@@ -90,14 +101,11 @@ export async function PATCH(
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
 
-    console.log('Updated product:', data)
     return NextResponse.json({ product: data })
   } catch (error) {
-    console.error('PATCH error:', error)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -108,6 +116,12 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Verify admin authentication
+    const authResult = await verifyAdmin(request)
+    if (!authResult.isValid) {
+      return NextResponse.json({ error: authResult.error }, { status: 401 })
+    }
+
     const { error } = await supabaseAdmin
       .from('products')
       .delete()
