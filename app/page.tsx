@@ -50,8 +50,8 @@ const features = [
   },
   {
     icon: CheckCircle,
-    title: 'Installation Service',
-    description: 'We will supply and install your fireplace to suit your exact requirements.',
+    title: 'Quality Assurance',
+    description: 'We ensure every product meets our high standards of quality and craftsmanship.',
   },
 ]
 
@@ -96,8 +96,7 @@ export default function HomePage() {
               transition={{ duration: 0.8 }}
             >
               <h1 className="text-5xl lg:text-6xl font-bold mb-6 leading-tight">
-                Quality Fireplaces
-                <span className="block text-yellow-300">In Southend & Essex</span>
+                Our online shop is now open for all your fire/fireplace needs.
               </h1>
               <p className="text-xl text-white/95 mb-8 leading-relaxed">
                 Trustworthy, Affordable, Dependable. Established in 1988, we provide 
@@ -105,7 +104,7 @@ export default function HomePage() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/products" className="btn-primary text-lg px-8 py-4 inline-flex items-center justify-center">
-                  Order Fireplaces
+                  Shop Here
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
                 <Link href="/contact" className="btn-outline text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary-600">
@@ -184,9 +183,9 @@ export default function HomePage() {
             viewport={{ once: true }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl font-bold text-secondary-800 mb-4">Featured Fireplaces</h2>
+            <h2 className="text-4xl font-bold text-secondary-800 mb-4">Featured Products</h2>
             <p className="text-xl text-secondary-600 max-w-3xl mx-auto">
-              Discover our most popular fireplaces, carefully selected for their quality and style.
+              Discover our most popular products, carefully selected for their quality and style.
             </p>
           </motion.div>
 
@@ -236,23 +235,6 @@ export default function HomePage() {
                     {product.name}
                   </h3>
                   
-                  <div className="flex items-center mb-3">
-                    <div className="flex items-center">
-                      {[...Array(5)].map((_, i) => (
-                        <Star
-                          key={i}
-                          className={`w-4 h-4 ${
-                            i < Math.floor(product.rating)
-                              ? 'text-yellow-400 fill-current'
-                              : 'text-secondary-300'
-                          }`}
-                        />
-                      ))}
-                    </div>
-                    <span className="ml-2 text-sm text-secondary-600">
-                      {product.rating} ({product.review_count} reviews)
-                    </span>
-                  </div>
                   
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-2">

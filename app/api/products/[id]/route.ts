@@ -30,7 +30,7 @@ export async function PUT(
 ) {
   try {
     const body = await request.json()
-    const { id, original_price, ...updateData } = body
+    const { id, original_price, dimensions, weight, specifications, ...updateData } = body
 
     // Explicitly handle original_price: set to null if undefined, otherwise use the value
     const productUpdate: any = {
@@ -38,7 +38,18 @@ export async function PUT(
       original_price: original_price === undefined || original_price === null || original_price === 0 
         ? null 
         : parseFloat(original_price),
+      // Handle dimensions and weight: set to null if empty string or undefined
+      dimensions: dimensions === '' || dimensions === undefined ? null : dimensions,
+      weight: weight === '' || weight === undefined ? null : weight,
+      // CRITICAL: Always replace specifications entirely - never merge
+      // If specifications is in the body, use it (even if empty object {}), otherwise keep existing
+      specifications: body.specifications !== undefined ? (body.specifications || {}) : undefined,
       updated_at: new Date().toISOString()
+    }
+
+    // Remove specifications from updateData if it's undefined (don't update it)
+    if (productUpdate.specifications === undefined) {
+      delete productUpdate.specifications
     }
 
     const { data, error } = await supabaseAdmin

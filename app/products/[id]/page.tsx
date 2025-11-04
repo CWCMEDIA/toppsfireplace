@@ -120,7 +120,6 @@ export default function ProductDetailPage() {
   const tabs = [
     { id: 'description', label: 'Description' },
     { id: 'specifications', label: 'Specifications' },
-    { id: 'reviews', label: 'Reviews' },
     { id: 'shipping', label: 'Shipping & Returns' },
   ]
 
@@ -206,24 +205,6 @@ export default function ProductDetailPage() {
               </div>
               
               <h1 className="text-3xl font-bold text-secondary-800 mb-4">{product.name}</h1>
-              
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="flex items-center">
-                  {[...Array(5)].map((_, i) => (
-                    <Star
-                      key={i}
-                      className={`w-5 h-5 ${
-                        i < Math.floor(product.rating || 0)
-                          ? 'text-yellow-400 fill-current'
-                          : 'text-secondary-300'
-                      }`}
-                    />
-                  ))}
-                </div>
-                <span className="text-secondary-600">
-                  {product.rating || 0} ({product.review_count || 0} reviews)
-                </span>
-              </div>
             </div>
 
             <div className="space-y-4">
@@ -379,18 +360,6 @@ export default function ProductDetailPage() {
                         <td className="px-6 py-4 font-medium text-secondary-800 bg-secondary-50">Fuel Type</td>
                         <td className="px-6 py-4 text-secondary-700">{product.fuel_type}</td>
                       </tr>
-                      {product.dimensions && (
-                        <tr className="border-b border-secondary-100">
-                          <td className="px-6 py-4 font-medium text-secondary-800 bg-secondary-50">Dimensions</td>
-                          <td className="px-6 py-4 text-secondary-700">{product.dimensions}</td>
-                        </tr>
-                      )}
-                      {product.weight && (
-                        <tr className="border-b border-secondary-100">
-                          <td className="px-6 py-4 font-medium text-secondary-800 bg-secondary-50">Weight</td>
-                          <td className="px-6 py-4 text-secondary-700">{product.weight}</td>
-                        </tr>
-                      )}
                       {product.specifications && Object.entries(product.specifications).map(([key, value]) => (
                         <tr key={key} className="border-b border-secondary-100">
                           <td className="px-6 py-4 font-medium text-secondary-800 bg-secondary-50">
@@ -407,48 +376,6 @@ export default function ProductDetailPage() {
               </div>
             )}
 
-            {activeTab === 'reviews' && (
-              <div>
-                <h3 className="text-xl font-semibold text-secondary-800 mb-6">Customer Reviews</h3>
-                <div className="space-y-6">
-                  {/* Sample reviews */}
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-semibold text-secondary-800">Sarah Johnson</h4>
-                        <p className="text-sm text-secondary-600">Benfleet</p>
-                      </div>
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-secondary-700">
-                      "Punctual, clean and tidy. Lovely job. Carried out efficiently with a very pleasant manner. 10/10"
-                    </p>
-                  </div>
-                  
-                  <div className="bg-white rounded-lg shadow-sm p-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <h4 className="font-semibold text-secondary-800">Michael Chen</h4>
-                        <p className="text-sm text-secondary-600">Westcliff-On-Sea</p>
-                      </div>
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 text-yellow-400 fill-current" />
-                        ))}
-                      </div>
-                    </div>
-                    <p className="text-secondary-700">
-                      "The service provided was first class, the workmanship excellent and we would not hesitate to recommend Tops Fireplaces. 10/10"
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {activeTab === 'shipping' && (
               <div className="space-y-6">
                 <div>
@@ -457,11 +384,11 @@ export default function ProductDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Delivery Areas</h4>
-                        <p className="text-secondary-700">We deliver across Essex and Southend with free delivery on orders over £500.</p>
+                        <p className="text-secondary-700">Nationwide delivery service available.</p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Delivery Time</h4>
-                        <p className="text-secondary-700">Standard delivery: 3-5 working days. Express delivery available.</p>
+                        <p className="text-secondary-700">Standard delivery available. Express delivery available.</p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Installation</h4>
@@ -469,7 +396,7 @@ export default function ProductDetailPage() {
                       </div>
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Returns</h4>
-                        <p className="text-secondary-700">30-day return policy for unused items in original packaging.</p>
+                        <p className="text-secondary-700">14 day return policy for unused items in original packaging.</p>
                       </div>
                     </div>
                   </div>
@@ -515,24 +442,7 @@ export default function ProductDetailPage() {
                         {relatedProduct.name}
                       </h4>
                     </Link>
-                    <div className="flex items-center mb-3">
-                      <div className="flex items-center">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < Math.floor(relatedProduct.rating || 0)
-                                ? 'text-yellow-400 fill-current'
-                                : 'text-secondary-300'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span className="ml-2 text-sm text-secondary-600">
-                        {relatedProduct.rating?.toFixed(1) || '0.0'} ({relatedProduct.review_count || 0} reviews)
-                      </span>
-                    </div>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-3">
                       <div className="flex items-center space-x-2">
                         <span className="text-xl font-bold text-primary-600">£{relatedProduct.price.toLocaleString()}</span>
                         {relatedProduct.original_price && relatedProduct.original_price > 0 && relatedProduct.original_price > relatedProduct.price && (

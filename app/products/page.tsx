@@ -246,11 +246,6 @@ export default function ProductsPage() {
                       <span className="text-sm text-secondary-500 uppercase tracking-wide">
                         {product.material} • {product.fuel_type}
                       </span>
-                      <div className="flex items-center space-x-1">
-                        <Star className="w-4 h-4 text-yellow-400 fill-current" />
-                        <span className="text-sm text-secondary-600">{product.rating.toFixed(1)}</span>
-                        <span className="text-sm text-secondary-400">({product.review_count})</span>
-                      </div>
                     </div>
 
                     <h3 className="text-lg font-semibold text-secondary-900 mb-2 group-hover:text-primary-600 transition-colors">

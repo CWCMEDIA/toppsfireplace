@@ -38,7 +38,8 @@ const Header = () => {
 
   const navigation = [
     { name: 'Home', href: '/' },
-    { name: 'Fireplaces', href: '/products' },
+    { name: 'Shop', href: '/products' },
+    { name: 'Our Range', href: '/products' },
     { name: 'Gallery', href: '/gallery' },
     { name: 'Contact', href: '/contact' },
   ]
@@ -48,19 +49,13 @@ const Header = () => {
       {/* Top bar */}
       <div className="bg-primary-600 text-white py-2">
         <div className="container-custom">
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center space-x-4">
-              <span className="flex items-center">
-                <Phone className="w-4 h-4 mr-1" />
-                01702 510222
-              </span>
-              <span>|</span>
-              <span>Free delivery across Essex</span>
-            </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <span>Est. 1988</span>
-              <span>|</span>
-              <span>Expert Installation</span>
+          <div className="flex justify-center items-center text-sm">
+            <div className="flex items-center flex-wrap justify-center gap-4">
+              <span>•01702 510222</span>
+              <span>•Over 35 Years Experience</span>
+              <span>•Free Delivery</span>
+              <span>•14 Day Returns</span>
+              <span>•Manufactures Warranty</span>
             </div>
           </div>
         </div>
@@ -70,8 +65,8 @@ const Header = () => {
       <div className="container-custom">
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center space-x-3">
-            <div className="w-12 h-12 relative">
+          <Link href="/" className="flex items-center">
+            <div className="w-24 h-24 relative">
               <Image
                 src="/tops.png"
                 alt="Tops Fireplaces"
@@ -79,10 +74,6 @@ const Header = () => {
                 className="object-contain"
                 priority
               />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-secondary-800">Tops Fireplaces</h1>
-              <p className="text-sm text-secondary-600">Quality Fireplaces in Essex</p>
             </div>
           </Link>
 

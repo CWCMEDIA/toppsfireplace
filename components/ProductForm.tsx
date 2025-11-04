@@ -134,6 +134,11 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
       ...formData,
       // Only include original_price if it's set and greater than 0
       original_price: formData.original_price && formData.original_price > 0 ? formData.original_price : undefined,
+      // Clear dimensions and weight if empty strings
+      dimensions: formData.dimensions?.trim() || null,
+      weight: formData.weight?.trim() || null,
+      // Always send specifications object (even if empty) to ensure it replaces the old one
+      specifications: formData.specifications || {},
       images,
       rating: product?.rating || 0,
       review_count: product?.review_count || 0
