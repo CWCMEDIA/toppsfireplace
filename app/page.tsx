@@ -62,13 +62,21 @@ export default function HomePage() {
   useEffect(() => {
     const fetchFeaturedProducts = async () => {
       try {
-        const response = await fetch('/api/products/featured')
+        // Use cache: 'no-store' to ensure fresh data on every page load
+        const response = await fetch('/api/products/featured', {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        })
         if (response.ok) {
           const data = await response.json()
           setFeaturedProducts(data.products)
         }
       } catch (error) {
-        console.error('Error fetching featured products:', error)
+        // Silently handle error - products will just not display
       } finally {
         setLoading(false)
       }
