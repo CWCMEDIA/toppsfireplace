@@ -1,6 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
-import { verifyAdmin } from '@/lib/auth'
+import { jwtVerify } from 'jose'
+
+const JWT_SECRET = process.env.JWT_SECRET
+
+if (!JWT_SECRET) {
+  throw new Error('Missing required JWT_SECRET environment variable')
+}
+
+// Helper function to verify admin authentication
+async function verifyAdmin(request: NextRequest) {
+  const token = request.cookies.get('admin-token')?.value
+  if (!token) {
+    return { isValid: false, error: 'Unauthorized' }
+  }
+
+  try {
+    const secret = new TextEncoder().encode(JWT_SECRET)
+    const { payload } = await jwtVerify(token, secret)
+    
+    if (payload.role !== 'admin') {
+      return { isValid: false, error: 'Forbidden' }
+    }
+
+    return { isValid: true }
+  } catch (error: any) {
+    return { isValid: false, error: 'Unauthorized' }
+  }
+}
 
 // GET /api/brands/[id] - Get single brand
 export async function GET(
