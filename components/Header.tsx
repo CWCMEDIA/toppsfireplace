@@ -104,38 +104,38 @@ const Header = () => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       {/* Top bar */}
-      <div className="text-white py-2 hidden sm:block" style={{ backgroundColor: '#827977' }}>
-        <div className="container-custom">
+      <div className="text-white py-1.5 sm:py-2" style={{ backgroundColor: '#827977' }}>
+        <div className="container-custom px-4 sm:px-6 lg:px-8">
           <div className="flex justify-center items-center text-xs sm:text-sm">
-            <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-4">
+            <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
               <span className="whitespace-nowrap">•01702 510222</span>
-              <span className="hidden md:inline">•Over 35 Years Experience</span>
-              <span className="whitespace-nowrap">•Free Delivery</span>
-              <span className="hidden lg:inline">•14 Day Returns</span>
-              <span className="hidden lg:inline">•Manufactures Warranty</span>
+              <span className="hidden sm:inline whitespace-nowrap">•Free Delivery</span>
+              <span className="hidden md:inline whitespace-nowrap">•Over 35 Years Experience</span>
+              <span className="hidden lg:inline whitespace-nowrap">•14 Day Returns</span>
+              <span className="hidden lg:inline whitespace-nowrap">•Manufactures Warranty</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main header */}
-      <div className="container-custom">
-        <div className="flex items-center justify-between py-3 sm:py-4 gap-2 sm:gap-4">
+      <div className="container-custom px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between py-3 sm:py-4 gap-3 sm:gap-4">
           {/* Logo */}
-          <Link href="/" className="flex items-center flex-shrink-0">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 relative overflow-visible">
+          <Link href="/" className="flex items-center flex-shrink-0 min-w-0">
+            <div className="w-28 h-16 sm:w-32 sm:h-20 md:w-36 md:h-20 lg:w-40 lg:h-24 relative overflow-visible">
               <Image
                 src="/tops.png"
                 alt="Tops Fireplaces"
                 fill
-                className="object-contain scale-[1.5] sm:scale-[1.75] lg:scale-[2]"
+                className="object-contain object-left"
                 priority
               />
             </div>
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center justify-center flex-1 max-w-2xl">
+          <nav className="hidden lg:flex items-center justify-center flex-1 max-w-2xl mx-4">
             <div className="flex items-center justify-between w-full space-x-12">
               {navigation.map((item) => (
                 <Link
@@ -150,7 +150,7 @@ const Header = () => {
           </nav>
 
           {/* Search and Cart */}
-          <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 md:space-x-4 flex-shrink-0">
             <button
               onClick={() => setIsSearchOpen(!isSearchOpen)}
               className="p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200"
@@ -172,7 +172,7 @@ const Header = () => {
             </Link>
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="lg:hidden p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200"
+              className="lg:hidden p-2 text-secondary-600 hover:text-primary-600 transition-colors duration-200 ml-1"
               aria-label="Menu"
             >
               {isMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -182,7 +182,7 @@ const Header = () => {
 
         {/* Search Bar */}
         {isSearchOpen && (
-          <div className="pb-4">
+          <div className="pb-4 px-4 sm:px-0">
             <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
@@ -252,13 +252,13 @@ const Header = () => {
 
         {/* Mobile Navigation */}
         {isMenuOpen && (
-          <div className="lg:hidden border-t border-secondary-200 py-4">
-            <nav className="flex flex-col space-y-4">
+          <div className="lg:hidden border-t border-secondary-200 py-4 px-4">
+            <nav className="flex flex-col space-y-3">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   href={item.href}
-                  className="text-secondary-700 hover:text-primary-600 font-medium py-2 transition-colors duration-200"
+                  className="text-secondary-700 hover:text-primary-600 font-medium py-2.5 px-2 transition-colors duration-200 rounded-lg hover:bg-primary-50"
                   onClick={() => setIsMenuOpen(false)}
                 >
                   {item.name}
