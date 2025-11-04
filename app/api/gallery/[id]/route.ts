@@ -69,7 +69,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { title, category, type, description, location, year, images, status } = body
+    const { title, category, type, description, location, year, images, videos, status } = body
 
     const { data, error } = await supabaseAdmin
       .from('gallery')
@@ -81,6 +81,7 @@ export async function PUT(
         location,
         year,
         images: images || [],
+        videos: videos !== undefined ? (videos || []) : undefined,
         status: status || 'active',
         updated_at: new Date().toISOString()
       })

@@ -6,21 +6,33 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('file') as File
     const folder = formData.get('folder') as string || 'products'
+    const fileType = formData.get('fileType') as string || 'image' // 'image' or 'video'
 
     if (!file) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Validate file type
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
-    }
-
-    // Validate file size (5MB max)
-    const maxSize = 5 * 1024 * 1024
-    if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File too large' }, { status: 400 })
+    // Validate file type based on fileType parameter
+    if (fileType === 'video') {
+      const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
+      if (!allowedVideoTypes.includes(file.type)) {
+        return NextResponse.json({ error: 'Invalid video file type. Allowed: MP4, WebM, MOV, AVI' }, { status: 400 })
+      }
+      // Video size limit: 50MB for free tier, increase if needed
+      const maxVideoSize = 50 * 1024 * 1024
+      if (file.size > maxVideoSize) {
+        return NextResponse.json({ error: 'Video file too large. Maximum size: 50MB' }, { status: 400 })
+      }
+    } else {
+      const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+      if (!allowedImageTypes.includes(file.type)) {
+        return NextResponse.json({ error: 'Invalid file type' }, { status: 400 })
+      }
+      // Image size limit: 5MB
+      const maxSize = 5 * 1024 * 1024
+      if (file.size > maxSize) {
+        return NextResponse.json({ error: 'File too large' }, { status: 400 })
+      }
     }
 
     // Generate unique filename
@@ -29,8 +41,13 @@ export async function POST(request: NextRequest) {
     const fileExtension = file.name.split('.').pop()
     const fileName = `${timestamp}-${randomString}.${fileExtension}`
 
-    // Determine bucket based on folder
-    const bucketName = folder === 'gallery' ? 'gallery-images' : 'product-images'
+    // Determine bucket based on folder and file type
+    let bucketName: string
+    if (fileType === 'video') {
+      bucketName = folder === 'gallery' ? 'gallery-videos' : 'product-videos'
+    } else {
+      bucketName = folder === 'gallery' ? 'gallery-images' : 'product-images'
+    }
 
     // Upload to Supabase Storage
     const { data, error } = await supabaseAdmin.storage

@@ -14,6 +14,7 @@ export interface Product {
   features?: string[]
   specifications?: Record<string, string>
   images: string[]
+  videos?: string[]
   badge?: string
   rating: number
   review_count: number
@@ -99,6 +100,7 @@ export interface GalleryItem {
   location: string
   year: string
   images: string[]
+  videos?: string[]
   status: 'active' | 'inactive'
   created_at: string
   updated_at: string

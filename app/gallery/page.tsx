@@ -333,6 +333,26 @@ export default function GalleryPage() {
                   </div>
                 </div>
               )}
+
+              {/* Videos */}
+              {selectedItem.videos && selectedItem.videos.length > 0 && (
+                <div className="mt-6 pt-6 border-t border-secondary-200">
+                  <h3 className="text-sm font-medium text-secondary-700 mb-3">Videos</h3>
+                  <div className="space-y-4">
+                    {selectedItem.videos.map((video, index) => (
+                      <div key={index} className="rounded-lg overflow-hidden shadow-md">
+                        <video
+                          src={video}
+                          controls
+                          className="w-full h-auto"
+                        >
+                          Your browser does not support the video tag.
+                        </video>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>

@@ -31,11 +31,17 @@ export default function ProductDetailPage() {
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([])
-  const [selectedImage, setSelectedImage] = useState(0)
+  const [selectedMedia, setSelectedMedia] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
   const [isWishlisted, setIsWishlisted] = useState(false)
   const [isAdmin, setIsAdmin] = useState(false)
+
+  // Combine images and videos into a single media array
+  const mediaItems = product ? [
+    ...(product.images || []).map(img => ({ type: 'image' as const, url: img })),
+    ...(product.videos || []).map(vid => ({ type: 'video' as const, url: vid }))
+  ] : []
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -44,6 +50,7 @@ export default function ProductDetailPage() {
         if (response.ok) {
           const data = await response.json()
           setProduct(data.product)
+          setSelectedMedia(0) // Reset to first item when product changes
           
           // Fetch related products after product is loaded
           if (data.product) {
@@ -151,41 +158,73 @@ export default function ProductDetailPage() {
 
       <div className="container-custom py-8">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
-          {/* Product Images */}
+          {/* Product Media Gallery (Images + Videos) */}
           <div className="space-y-4">
             <div className="aspect-w-1 aspect-h-1 bg-white rounded-xl overflow-hidden shadow-lg">
-              {product.images && product.images.length > 0 ? (
-                <Image
-                  src={product.images[selectedImage] || '/api/placeholder/600/400'}
-                  alt={product.name}
-                  width={600}
-                  height={400}
-                  className="w-full h-96 object-cover"
-                />
+              {mediaItems.length > 0 ? (
+                mediaItems[selectedMedia].type === 'image' ? (
+                  <Image
+                    src={mediaItems[selectedMedia].url}
+                    alt={product.name}
+                    width={600}
+                    height={400}
+                    className="w-full h-96 object-cover"
+                  />
+                ) : (
+                  <video
+                    src={mediaItems[selectedMedia].url}
+                    controls
+                    className="w-full h-96 object-cover"
+                  >
+                    Your browser does not support the video tag.
+                  </video>
+                )
               ) : (
                 <div className="w-full h-96 bg-secondary-100 flex items-center justify-center">
-                  <span className="text-secondary-500 text-lg">No Image Available</span>
+                  <span className="text-secondary-500 text-lg">No Media Available</span>
                 </div>
               )}
             </div>
             
-            {product.images && product.images.length > 1 && (
+            {mediaItems.length > 1 && (
               <div className="grid grid-cols-4 gap-4">
-                {product.images.map((image, index) => (
+                {mediaItems.map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 ${
-                      selectedImage === index ? 'border-primary-600' : 'border-secondary-200'
+                    onClick={() => setSelectedMedia(index)}
+                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 relative ${
+                      selectedMedia === index ? 'border-primary-600' : 'border-secondary-200'
                     }`}
                   >
-                    <Image
-                      src={image}
-                      alt={`${product.name} ${index + 1}`}
-                      width={100}
-                      height={100}
-                      className="w-full h-20 object-cover"
-                    />
+                    {item.type === 'image' ? (
+                      <Image
+                        src={item.url}
+                        alt={`${product.name} ${index + 1}`}
+                        width={100}
+                        height={100}
+                        className="w-full h-20 object-cover"
+                      />
+                    ) : (
+                      <>
+                        <video
+                          src={item.url}
+                          className="w-full h-20 object-cover"
+                          muted
+                          onMouseEnter={(e) => e.currentTarget.play()}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.pause()
+                            e.currentTarget.currentTime = 0
+                          }}
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <div className="w-8 h-8 bg-white/90 rounded-full flex items-center justify-center">
+                            <svg className="w-4 h-4 text-primary-600 ml-1" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z"/>
+                            </svg>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </button>
                 ))}
               </div>

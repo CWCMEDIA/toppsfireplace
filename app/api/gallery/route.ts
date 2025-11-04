@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { title, category, type, description, location, year, images, status } = body
+    const { title, category, type, description, location, year, images, videos, status } = body
 
     // Validate required fields
     if (!title || !category || !type || !description || !location || !year) {
@@ -65,6 +65,7 @@ export async function POST(request: NextRequest) {
         location,
         year,
         images: images || [],
+        videos: videos || [],
         status: status || 'active'
       })
       .select()

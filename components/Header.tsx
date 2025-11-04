@@ -39,8 +39,7 @@ const Header = () => {
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/products' },
-    { name: 'Our Range', href: '/products' },
-    { name: 'Gallery', href: '/gallery' },
+    { name: 'Our Range', href: '/gallery' },
     { name: 'Contact', href: '/contact' },
   ]
 
@@ -66,12 +65,12 @@ const Header = () => {
         <div className="flex items-center justify-between py-4">
           {/* Logo */}
           <Link href="/" className="flex items-center">
-            <div className="w-24 h-24 relative">
+            <div className="w-24 h-24 relative overflow-visible">
               <Image
                 src="/tops.png"
                 alt="Tops Fireplaces"
                 fill
-                className="object-contain"
+                className="object-contain scale-[2]"
                 priority
               />
             </div>

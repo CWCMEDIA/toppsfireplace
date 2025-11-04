@@ -34,11 +34,14 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
   })
 
   const [images, setImages] = useState<string[]>(product?.images || [])
+  const [videos, setVideos] = useState<string[]>(product?.videos || [])
   const [uploading, setUploading] = useState(false)
+  const [uploadingVideo, setUploadingVideo] = useState(false)
   const [newFeature, setNewFeature] = useState('')
   const [newSpecKey, setNewSpecKey] = useState('')
   const [newSpecValue, setNewSpecValue] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const videoInputRef = useRef<HTMLInputElement>(null)
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -83,6 +86,43 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
 
   const handleRemoveImage = (index: number) => {
     setImages(prev => prev.filter((_, i) => i !== index))
+  }
+
+  const handleVideoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploadingVideo(true)
+    try {
+      for (const file of Array.from(files)) {
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', 'products')
+        formData.append('fileType', 'video')
+
+        const response = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setVideos(prev => [...prev, data.url])
+          toast.success('Video uploaded successfully')
+        } else {
+          const errorData = await response.json()
+          toast.error(errorData.error || 'Failed to upload video')
+        }
+      }
+    } catch (error) {
+      toast.error('Failed to upload video')
+    } finally {
+      setUploadingVideo(false)
+    }
+  }
+
+  const handleRemoveVideo = (index: number) => {
+    setVideos(prev => prev.filter((_, i) => i !== index))
   }
 
   const handleAddFeature = () => {
@@ -135,11 +175,12 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
       // Only include original_price if it's set and greater than 0
       original_price: formData.original_price && formData.original_price > 0 ? formData.original_price : undefined,
       // Clear dimensions and weight if empty strings
-      dimensions: formData.dimensions?.trim() || undefined,
-      weight: formData.weight?.trim() || undefined,
+      dimensions: formData.dimensions?.trim() || null,
+      weight: formData.weight?.trim() || null,
       // Always send specifications object (even if empty) to ensure it replaces the old one
       specifications: formData.specifications || {},
       images,
+      videos: videos.length > 0 ? videos : undefined,
       rating: product?.rating || 0,
       review_count: product?.review_count || 0
     }
@@ -389,6 +430,60 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                         className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity"
                       >
                         <X className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Videos */}
+          <div>
+            <label className="block text-sm font-medium text-secondary-700 mb-2">
+              Product Videos
+            </label>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-4">
+                <button
+                  type="button"
+                  onClick={() => videoInputRef.current?.click()}
+                  disabled={uploadingVideo}
+                  className="flex items-center space-x-2 px-4 py-2 border border-secondary-300 rounded-lg hover:bg-secondary-50 disabled:opacity-50"
+                >
+                  <Upload className="w-4 h-4" />
+                  <span>{uploadingVideo ? 'Uploading...' : 'Upload Videos'}</span>
+                </button>
+                <input
+                  ref={videoInputRef}
+                  type="file"
+                  multiple
+                  accept="video/*"
+                  onChange={handleVideoUpload}
+                  className="hidden"
+                />
+                <span className="text-xs text-secondary-500">Max 50MB per video (MP4, WebM, MOV, AVI)</span>
+              </div>
+              
+              {videos.length > 0 && (
+                <div className="space-y-2">
+                  {videos.map((video, index) => (
+                    <div key={index} className="relative group flex items-center space-x-3 p-3 bg-secondary-50 rounded-lg">
+                      <video
+                        src={video}
+                        className="w-32 h-20 object-cover rounded"
+                        controls={false}
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-secondary-800">Video {index + 1}</p>
+                        <p className="text-xs text-secondary-500 truncate">{video}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveVideo(index)}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
                   ))}
