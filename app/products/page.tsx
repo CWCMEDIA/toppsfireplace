@@ -6,7 +6,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
 import { Search, Filter, Star, ShoppingCart, Heart, ArrowRight } from 'lucide-react'
-import { Product } from '@/lib/types'
+import { Product, Brand } from '@/lib/types'
 import { addToCart as addProductToCart } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
@@ -24,9 +24,11 @@ const categories = [
 function ProductsPageContent() {
   const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [selectedBrand, setSelectedBrand] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [showFilters, setShowFilters] = useState(false)
 
@@ -37,7 +39,20 @@ function ProductsPageContent() {
       setSearchTerm(searchQuery)
     }
     fetchProducts()
+    fetchBrands()
   }, [searchParams])
+
+  const fetchBrands = async () => {
+    try {
+      const response = await fetch('/api/brands')
+      if (response.ok) {
+        const data = await response.json()
+        setBrands(data.brands || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch brands:', error)
+    }
+  }
 
   const fetchProducts = async () => {
     try {
@@ -61,7 +76,8 @@ function ProductsPageContent() {
                          product.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
-    return matchesSearch && matchesCategory && product.status === 'active'
+    const matchesBrand = selectedBrand === 'all' || product.brand_id === selectedBrand
+    return matchesSearch && matchesCategory && matchesBrand && product.status === 'active'
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -171,6 +187,29 @@ function ProductsPageContent() {
                     ))}
                   </div>
                 </div>
+
+                {/* Brands */}
+                {brands.length > 0 && (
+                  <div>
+                    <h4 className="text-sm font-medium text-secondary-700 mb-3">Brands</h4>
+                    <select
+                      value={selectedBrand}
+                      onChange={(e) => setSelectedBrand(e.target.value)}
+                      className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="all">All Brands</option>
+                      {brands.map((brand) => {
+                        const brandProductCount = products.filter(p => p.brand_id === brand.id && p.status === 'active').length
+                        if (brandProductCount === 0) return null
+                        return (
+                          <option key={brand.id} value={brand.id}>
+                            {brand.name} ({brandProductCount})
+                          </option>
+                        )
+                      })}
+                    </select>
+                  </div>
+                )}
 
                 {/* Sort */}
                 <div>
@@ -323,6 +362,7 @@ function ProductsPageContent() {
                   onClick={() => {
                     setSearchTerm('')
                     setSelectedCategory('all')
+                    setSelectedBrand('all')
                   }}
                   className="btn-primary"
                 >

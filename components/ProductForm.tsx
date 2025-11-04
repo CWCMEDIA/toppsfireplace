@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { X, Save, Upload, Image as ImageIcon, Trash2 } from 'lucide-react'
-import { Product } from '@/lib/types'
+import { Product, Brand } from '@/lib/types'
 import toast from 'react-hot-toast'
 
 interface ProductFormProps {
@@ -23,6 +23,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     subcategory: product?.subcategory || 'fireplace',
     material: product?.material || '',
     fuel_type: product?.fuel_type || 'gas',
+    brand_id: product?.brand_id || '',
     dimensions: product?.dimensions || '',
     weight: product?.weight || '',
     features: product?.features || [],
@@ -35,6 +36,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
 
   const [images, setImages] = useState<string[]>(product?.images || [])
   const [videos, setVideos] = useState<string[]>(product?.videos || [])
+  const [brands, setBrands] = useState<Brand[]>([])
   const [uploading, setUploading] = useState(false)
   const [uploadingVideo, setUploadingVideo] = useState(false)
   const [newFeature, setNewFeature] = useState('')
@@ -42,6 +44,22 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
   const [newSpecValue, setNewSpecValue] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const videoInputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => {
+    // Fetch brands when component mounts
+    const fetchBrands = async () => {
+      try {
+        const response = await fetch('/api/brands')
+        if (response.ok) {
+          const data = await response.json()
+          setBrands(data.brands || [])
+        }
+      } catch (error) {
+        console.error('Failed to fetch brands:', error)
+      }
+    }
+    fetchBrands()
+  }, [])
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
@@ -177,6 +195,8 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
       // Clear dimensions and weight if empty strings
       dimensions: formData.dimensions?.trim() || undefined,
       weight: formData.weight?.trim() || undefined,
+      // Handle brand_id - set to null if empty string
+      brand_id: formData.brand_id || undefined,
       // Always send specifications object (even if empty) to ensure it replaces the old one
       specifications: formData.specifications || {},
       images,
@@ -293,6 +313,24 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                 <option value="electric">Electric</option>
                 <option value="wood">Wood</option>
                 <option value="multi-fuel">Multi-fuel</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
+                Brand (Optional)
+              </label>
+              <select
+                name="brand_id"
+                value={formData.brand_id || ''}
+                onChange={handleInputChange}
+                className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              >
+                <option value="">None</option>
+                {brands.map((brand) => (
+                  <option key={brand.id} value={brand.id}>
+                    {brand.name}
+                  </option>
+                ))}
               </select>
             </div>
             <div>

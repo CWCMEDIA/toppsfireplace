@@ -1,3 +1,12 @@
+export interface Brand {
+  id: string
+  name: string
+  slug: string
+  status: 'active' | 'inactive'
+  created_at: string
+  updated_at: string
+}
+
 export interface Product {
   id: string
   name: string
@@ -9,6 +18,8 @@ export interface Product {
   subcategory?: string
   material: string
   fuel_type: string
+  brand_id?: string
+  brand?: Brand
   dimensions?: string
   weight?: string
   features?: string[]

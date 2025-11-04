@@ -25,7 +25,7 @@ import {
 import { motion } from 'framer-motion'
 import ProductForm from '@/components/ProductForm'
 import GalleryForm from '@/components/GalleryForm'
-import { Product, GalleryItem } from '@/lib/types'
+import { Product, GalleryItem, Brand } from '@/lib/types'
 import toast from 'react-hot-toast'
 
 // Sample data - this would come from your database
@@ -87,9 +87,13 @@ const sampleProducts = [
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'products' | 'gallery'>('products')
+  const [activeTab, setActiveTab] = useState<'products' | 'gallery' | 'brands'>('products')
   const [products, setProducts] = useState<Product[]>([])
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
+  const [brands, setBrands] = useState<Brand[]>([])
+  const [showAddBrand, setShowAddBrand] = useState(false)
+  const [editingBrand, setEditingBrand] = useState<Brand | null>(null)
+  const [newBrandName, setNewBrandName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [showAddProduct, setShowAddProduct] = useState(false)
@@ -114,6 +118,7 @@ export default function AdminDashboard() {
     setIsLoading(false)
     fetchProducts()
     fetchGalleryItems()
+    fetchBrands()
     fetchStats()
   }, [])
 
@@ -162,6 +167,87 @@ export default function AdminDashboard() {
       setGalleryItems(data.gallery || [])
     } catch (error) {
       toast.error('Failed to fetch gallery items')
+    }
+  }
+
+  const fetchBrands = async () => {
+    try {
+      const response = await fetch('/api/brands')
+      const data = await response.json()
+      setBrands(data.brands || [])
+    } catch (error) {
+      toast.error('Failed to fetch brands')
+    }
+  }
+
+  const handleCreateBrand = async () => {
+    if (!newBrandName.trim()) {
+      toast.error('Brand name is required')
+      return
+    }
+
+    try {
+      const response = await fetch('/api/brands', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name: newBrandName.trim() })
+      })
+
+      if (response.ok) {
+        toast.success('Brand created successfully')
+        setNewBrandName('')
+        setShowAddBrand(false)
+        fetchBrands()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to create brand')
+      }
+    } catch (error) {
+      toast.error('Failed to create brand')
+    }
+  }
+
+  const handleUpdateBrand = async (id: string, name: string, status: string) => {
+    try {
+      const response = await fetch(`/api/brands/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ name, status })
+      })
+
+      if (response.ok) {
+        toast.success('Brand updated successfully')
+        setEditingBrand(null)
+        fetchBrands()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to update brand')
+      }
+    } catch (error) {
+      toast.error('Failed to update brand')
+    }
+  }
+
+  const handleDeleteBrand = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this brand?')) return
+
+    try {
+      const response = await fetch(`/api/brands/${id}`, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('Brand deleted successfully')
+        fetchBrands()
+      } else {
+        const data = await response.json()
+        toast.error(data.error || 'Failed to delete brand')
+      }
+    } catch (error) {
+      toast.error('Failed to delete brand')
     }
   }
 
@@ -447,6 +533,19 @@ export default function AdminDashboard() {
                   <span>Gallery</span>
                 </div>
               </button>
+              <button
+                onClick={() => setActiveTab('brands')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                  activeTab === 'brands'
+                    ? 'border-primary-600 text-primary-600'
+                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                }`}
+              >
+                <div className="flex items-center space-x-2">
+                  <Package className="w-5 h-5" />
+                  <span>Brands</span>
+                </div>
+              </button>
             </nav>
           </div>
         </div>
@@ -620,6 +719,164 @@ export default function AdminDashboard() {
         )}
 
         {/* Gallery Section */}
+        {/* Brands Section */}
+        {activeTab === 'brands' && (
+        <div className="bg-white rounded-xl shadow-sm">
+          <div className="p-6 border-b border-secondary-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+              <div>
+                <h2 className="text-2xl font-bold text-secondary-800">Brands</h2>
+                <p className="text-secondary-600">Manage product brands</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowAddBrand(true)
+                  setEditingBrand(null)
+                  setNewBrandName('')
+                }}
+                className="btn-primary flex items-center space-x-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Add Brand</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Add/Edit Brand Form */}
+          {(showAddBrand || editingBrand) && (
+            <div className="p-6 border-b border-secondary-200 bg-secondary-50">
+              <div className="max-w-md space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-secondary-700 mb-2">
+                    Brand Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingBrand ? editingBrand.name : newBrandName}
+                    onChange={(e) => editingBrand 
+                      ? setEditingBrand({...editingBrand, name: e.target.value})
+                      : setNewBrandName(e.target.value)
+                    }
+                    className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    placeholder="e.g., Dimplex, Valor, Newman"
+                  />
+                </div>
+                {editingBrand && (
+                  <div>
+                    <label className="block text-sm font-medium text-secondary-700 mb-2">
+                      Status
+                    </label>
+                    <select
+                      value={editingBrand.status}
+                      onChange={(e) => setEditingBrand({...editingBrand, status: e.target.value as 'active' | 'inactive'})}
+                      className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                    >
+                      <option value="active">Active</option>
+                      <option value="inactive">Inactive</option>
+                    </select>
+                  </div>
+                )}
+                <div className="flex items-center space-x-3">
+                  <button
+                    onClick={() => editingBrand 
+                      ? handleUpdateBrand(editingBrand.id, editingBrand.name, editingBrand.status)
+                      : handleCreateBrand()
+                    }
+                    className="btn-primary flex items-center space-x-2"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>{editingBrand ? 'Update Brand' : 'Create Brand'}</span>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowAddBrand(false)
+                      setEditingBrand(null)
+                      setNewBrandName('')
+                    }}
+                    className="px-4 py-2 border border-secondary-300 text-secondary-700 rounded-lg hover:bg-secondary-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Brands Table */}
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-secondary-200">
+              <thead className="bg-secondary-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Brand Name
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Products
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Status
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-secondary-200">
+                {brands.length === 0 ? (
+                  <tr>
+                    <td colSpan={4} className="px-6 py-8 text-center text-secondary-500">
+                      No brands found. Click "Add Brand" to create one.
+                    </td>
+                  </tr>
+                ) : (
+                  brands.map((brand) => {
+                    const productCount = products.filter(p => p.brand_id === brand.id).length
+                    return (
+                      <tr key={brand.id} className="hover:bg-secondary-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-secondary-900">{brand.name}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className="text-sm text-secondary-600">{productCount} product{productCount !== 1 ? 's' : ''}</span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                            brand.status === 'active'
+                              ? 'bg-green-100 text-green-800'
+                              : 'bg-red-100 text-red-800'
+                          }`}>
+                            {brand.status}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => {
+                                setEditingBrand(brand)
+                                setShowAddBrand(false)
+                              }}
+                              className="text-primary-600 hover:text-primary-900 p-1"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteBrand(brand.id)}
+                              className="text-red-600 hover:text-red-900 p-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        )}
+
         {activeTab === 'gallery' && (
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6 border-b border-secondary-200">
