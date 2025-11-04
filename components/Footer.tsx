@@ -38,7 +38,7 @@ const Footer = () => {
   }
 
   return (
-    <footer className="bg-secondary-900 text-white">
+    <footer className="bg-secondary-700 text-white">
       {/* Main footer content */}
       <div className="container-custom section-padding">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
@@ -66,15 +66,15 @@ const Footer = () => {
             {/* Contact Info */}
             <div className="space-y-3">
               <div className="flex items-center space-x-3">
-                <Phone className="w-5 h-5 text-primary-400" />
+                <Phone className="w-5 h-5 text-primary-500" />
                 <span>01702 510222</span>
               </div>
               <div className="flex items-center space-x-3">
-                <Mail className="w-5 h-5 text-primary-400" />
+                <Mail className="w-5 h-5 text-primary-500" />
                 <span>topsfireplaces@hotmail.com</span>
               </div>
               <div className="flex items-start space-x-3">
-                <MapPin className="w-5 h-5 text-primary-400 mt-1" />
+                <MapPin className="w-5 h-5 text-primary-500 mt-1" />
                 <div>
                   <p>332 Bridgwater Drive</p>
                   <p>Westcliff-on-Sea, Essex</p>
@@ -82,7 +82,7 @@ const Footer = () => {
                 </div>
               </div>
               <div className="flex items-center space-x-3">
-                <Clock className="w-5 h-5 text-primary-400" />
+                <Clock className="w-5 h-5 text-primary-500" />
                 <div>
                   <p>Monday-Saturday: 09:00-17:30</p>
                 </div>
@@ -98,7 +98,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-secondary-300 hover:text-primary-400 transition-colors duration-200"
+                    className="text-secondary-300 hover:text-primary-500 transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -115,7 +115,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-secondary-300 hover:text-primary-400 transition-colors duration-200"
+                    className="text-secondary-300 hover:text-primary-500 transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -132,7 +132,7 @@ const Footer = () => {
                 <li key={link.name}>
                   <Link
                     href={link.href}
-                    className="text-secondary-300 hover:text-primary-400 transition-colors duration-200"
+                    className="text-secondary-300 hover:text-primary-500 transition-colors duration-200"
                   >
                     {link.name}
                   </Link>
@@ -144,20 +144,20 @@ const Footer = () => {
       </div>
 
       {/* Bottom bar */}
-      <div className="border-t border-secondary-800">
+      <div className="border-t border-secondary-600">
         <div className="container-custom py-6">
           <div className="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
             <div className="text-secondary-400 text-sm">
               © {currentYear} Tops Fireplaces Ltd. All rights reserved.
             </div>
             <div className="flex space-x-6 text-sm">
-              <Link href="/privacy" className="text-secondary-400 hover:text-primary-400 transition-colors duration-200">
+              <Link href="/privacy" className="text-secondary-400 hover:text-primary-500 transition-colors duration-200">
                 Privacy Policy
               </Link>
-              <Link href="/terms" className="text-secondary-400 hover:text-primary-400 transition-colors duration-200">
+              <Link href="/terms" className="text-secondary-400 hover:text-primary-500 transition-colors duration-200">
                 Terms of Service
               </Link>
-              <Link href="/cookies" className="text-secondary-400 hover:text-primary-400 transition-colors duration-200">
+              <Link href="/cookies" className="text-secondary-400 hover:text-primary-500 transition-colors duration-200">
                 Cookie Policy
               </Link>
             </div>

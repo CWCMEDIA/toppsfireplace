@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
@@ -20,7 +21,8 @@ const categories = [
   { id: 'wood', name: 'Wood', count: 0 }
 ]
 
-export default function ProductsPage() {
+function ProductsPageContent() {
+  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState('')
@@ -29,8 +31,13 @@ export default function ProductsPage() {
   const [showFilters, setShowFilters] = useState(false)
 
   useEffect(() => {
+    // Read search query from URL
+    const searchQuery = searchParams.get('search')
+    if (searchQuery) {
+      setSearchTerm(searchQuery)
+    }
     fetchProducts()
-  }, [])
+  }, [searchParams])
 
   const fetchProducts = async () => {
     try {
@@ -93,8 +100,16 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-secondary-50">
       {/* Header */}
-      <section className="bg-gradient-primary text-white py-16">
-        <div className="container-custom">
+      <section className="relative bg-cover bg-center bg-no-repeat text-white py-16 overflow-hidden">
+        <div 
+          className="absolute inset-0 bg-cover bg-no-repeat"
+          style={{
+            backgroundImage: "url('/bannershop2.jpg')",
+            backgroundPosition: 'center 60%'
+          }}
+        ></div>
+        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="container-custom relative z-10">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Fireplaces</h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
@@ -319,5 +334,20 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-secondary-600">Loading products...</p>
+        </div>
+      </div>
+    }>
+      <ProductsPageContent />
+    </Suspense>
   )
 }

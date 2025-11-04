@@ -11,6 +11,8 @@
   body {
     font-family: 'Inter', system-ui, sans-serif;
     line-height: 1.6;
+    background-color: #EAE1D8; /* Light beige background matching main site */
+    color: #1D1D1D; /* Dark text */
   }
   
   h1, h2, h3, h4, h5, h6 {
@@ -59,7 +61,7 @@
   }
   
   .bg-gradient-secondary {
-    @apply bg-gradient-to-br from-secondary-50 to-secondary-100;
+    @apply bg-gradient-to-br from-secondary-200 to-secondary-100;
   }
 }
 

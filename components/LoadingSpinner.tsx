@@ -22,7 +22,7 @@ const LoadingSpinner = ({
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col items-center justify-center space-y-4 bg-gradient-primary z-50">
+    <div className="fixed inset-0 flex flex-col items-center justify-center space-y-4 z-50" style={{ backgroundColor: '#de5f1b' }}>
       {showLogo && (
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}

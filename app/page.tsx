@@ -78,7 +78,7 @@ export default function HomePage() {
   }, [])
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen" style={{ backgroundColor: '#f8f9fc' }}>
       {/* Hero Section */}
       <section className="relative bg-cover bg-center bg-no-repeat text-white overflow-hidden min-h-[80vh] flex items-center">
         <div 
@@ -107,7 +107,7 @@ export default function HomePage() {
                   Shop Here
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
-                <Link href="/contact" className="btn-outline text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary-600">
+                <Link href="/contact" className="btn-outline text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary-500">
                   Book Consultation
                 </Link>
               </div>
@@ -319,7 +319,7 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="section-padding bg-gradient-primary text-white">
+      <section className="section-padding text-white" style={{ backgroundColor: '#827977' }}>
         <div className="container-custom text-center">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -333,10 +333,10 @@ export default function HomePage() {
               the perfect fireplace for your space and budget.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/contact" className="btn-secondary bg-white text-primary-600 hover:bg-white/90 text-lg px-8 py-4">
+              <Link href="/contact" className="btn-secondary bg-white text-primary-500 hover:bg-white/90 text-lg px-8 py-4">
                 Book Free Consultation
               </Link>
-              <Link href="/gallery" className="btn-outline border-white text-white hover:bg-white hover:text-primary-600 text-lg px-8 py-4">
+              <Link href="/gallery" className="btn-outline border-white text-white hover:bg-white hover:text-primary-500 text-lg px-8 py-4">
                 View Our Gallery
               </Link>
             </div>

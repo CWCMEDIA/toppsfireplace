@@ -3,13 +3,19 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 import { Menu, X, ShoppingCart, Phone, Search } from 'lucide-react'
 import { getCartItemCount } from '@/lib/cart'
+import { Product } from '@/lib/types'
 
 const Header = () => {
+  const router = useRouter()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<Product[]>([])
+  const [isSearching, setIsSearching] = useState(false)
 
   useEffect(() => {
     // Initial cart count
@@ -36,6 +42,58 @@ const Header = () => {
     }
   }, [])
 
+  // Search functionality
+  useEffect(() => {
+    const searchProducts = async () => {
+      if (searchTerm.trim().length < 2) {
+        setSearchResults([])
+        return
+      }
+
+      setIsSearching(true)
+      try {
+        const response = await fetch('/api/products')
+        if (response.ok) {
+          const data = await response.json()
+          const products = data.products || []
+          
+          // Filter products by name/title
+          const filtered = products.filter((product: Product) =>
+            product.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
+            product.status === 'active'
+          ).slice(0, 5) // Limit to 5 results
+          
+          setSearchResults(filtered)
+        }
+      } catch (error) {
+        console.error('Error searching products:', error)
+        setSearchResults([])
+      } finally {
+        setIsSearching(false)
+      }
+    }
+
+    const debounceTimer = setTimeout(() => {
+      searchProducts()
+    }, 300) // Debounce search by 300ms
+
+    return () => clearTimeout(debounceTimer)
+  }, [searchTerm])
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (searchTerm.trim()) {
+      router.push(`/products?search=${encodeURIComponent(searchTerm)}`)
+      setSearchTerm('')
+      setIsSearchOpen(false)
+    }
+  }
+
+  const handleResultClick = () => {
+    setSearchTerm('')
+    setIsSearchOpen(false)
+  }
+
   const navigation = [
     { name: 'Home', href: '/' },
     { name: 'Shop', href: '/products' },
@@ -46,7 +104,7 @@ const Header = () => {
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
       {/* Top bar */}
-      <div className="bg-primary-600 text-white py-2">
+      <div className="text-white py-2" style={{ backgroundColor: '#827977' }}>
         <div className="container-custom">
           <div className="flex justify-center items-center text-sm">
             <div className="flex items-center flex-wrap justify-center gap-4">
@@ -122,14 +180,70 @@ const Header = () => {
         {/* Search Bar */}
         {isSearchOpen && (
           <div className="pb-4">
-            <div className="relative">
+            <form onSubmit={handleSearchSubmit} className="relative">
               <input
                 type="text"
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 placeholder="Search fireplaces, stoves, accessories..."
-                className="w-full px-4 py-3 pl-10 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                className="w-full px-4 py-3 pl-10 pr-10 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               />
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-400" />
-            </div>
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+              
+              {/* Search Results Dropdown */}
+              {searchTerm && searchResults.length > 0 && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-secondary-200 rounded-lg shadow-lg z-50 max-h-96 overflow-y-auto">
+                  {searchResults.map((product) => (
+                    <Link
+                      key={product.id}
+                      href={`/products/${product.id}`}
+                      onClick={handleResultClick}
+                      className="flex items-center space-x-3 p-3 hover:bg-secondary-50 transition-colors border-b border-secondary-100 last:border-b-0"
+                    >
+                      {product.images && product.images.length > 0 ? (
+                        <div className="w-16 h-16 relative flex-shrink-0">
+                          <Image
+                            src={product.images[0]}
+                            alt={product.name}
+                            fill
+                            className="object-cover rounded"
+                          />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 bg-secondary-100 rounded flex-shrink-0"></div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium text-secondary-800 truncate">{product.name}</h4>
+                        <p className="text-sm text-primary-600 font-semibold">£{product.price.toLocaleString()}</p>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="p-3 border-t border-secondary-200 bg-secondary-50">
+                    <button
+                      type="submit"
+                      className="w-full text-sm text-primary-600 font-medium hover:text-primary-700"
+                    >
+                      View all results for "{searchTerm}"
+                    </button>
+                  </div>
+                </div>
+              )}
+              
+              {searchTerm && searchResults.length === 0 && !isSearching && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-secondary-200 rounded-lg shadow-lg z-50 p-4">
+                  <p className="text-secondary-600 text-sm">No products found matching "{searchTerm}"</p>
+                </div>
+              )}
+            </form>
           </div>
         )}
 

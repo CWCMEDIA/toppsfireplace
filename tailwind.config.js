@@ -9,40 +9,40 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          50: '#fef7f0',
-          100: '#fdeee0',
-          200: '#fad9c0',
-          300: '#f6c195',
-          400: '#f1a168',
-          500: '#ed7c3a',
-          600: '#de5f1a',
-          700: '#b84a15',
-          800: '#933b18',
-          900: '#763216',
+          50: '#fef2f2',
+          100: '#fee2e2',
+          200: '#fecaca',
+          300: '#fca5a5',
+          400: '#f87171',
+          500: '#DF2C28', // Main red from their site
+          600: '#c91c1a', // Darker red for hover
+          700: '#b01514', // Even darker
+          800: '#991012',
+          900: '#7f0f11',
         },
         secondary: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
+          50: '#f5f5f5', // Light gray
+          100: '#EAE1D8', // Light beige from their site
+          200: '#EADED5', // Dominant beige from their site
+          300: '#d4c9c1',
+          400: '#827977', // Medium gray from their site
+          500: '#8F9195', // Gray from their site
+          600: '#6b6d71',
+          700: '#1D1D1D', // Dark text from their site
+          800: '#1a1a1a',
+          900: '#0f0f0f',
         },
         accent: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
+          50: '#f0f3f2',
+          100: '#d9e3e0',
+          200: '#AAB9B3', // Sage green from their site
+          300: '#8fa69f',
+          400: '#72938b',
+          500: '#5a7a72',
+          600: '#4a6560',
+          700: '#3d514e',
+          800: '#32403e',
+          900: '#2a3432',
         }
       },
       fontFamily: {
