@@ -12,13 +12,19 @@ import toast from 'react-hot-toast'
 
 const categories = [
   { id: 'all', name: 'All Products', count: 0 },
-  { id: 'limestone', name: 'Limestone', count: 0 },
-  { id: 'marble', name: 'Marble', count: 0 },
-  { id: 'granite', name: 'Granite', count: 0 },
-  { id: 'travertine', name: 'Travertine', count: 0 },
-  { id: 'cast-iron', name: 'Cast Iron', count: 0 },
-  { id: 'electric', name: 'Electric', count: 0 },
-  { id: 'wood', name: 'Wood', count: 0 }
+  { id: 'limestone', name: 'Limestone Fireplaces', count: 0 },
+  { id: 'marble', name: 'Marble Fireplaces', count: 0 },
+  { id: 'granite', name: 'Granite Fireplaces', count: 0 },
+  { id: 'travertine', name: 'Travertine Fireplaces', count: 0 },
+  { id: 'cast-iron', name: 'Cast Iron Fireplaces', count: 0 },
+  { id: 'wood-mdf', name: 'Wood/MDF Fireplaces', count: 0 },
+  { id: 'beams', name: 'Beams', count: 0 },
+  { id: 'gas-fires-stoves', name: 'Gas Fires and Stoves', count: 0 },
+  { id: 'electric', name: 'Electric Fires', count: 0 },
+  { id: 'media-wall', name: 'Media Wall Fires', count: 0 },
+  { id: 'electric-suites', name: 'Electric Suites', count: 0 },
+  { id: 'woodburners-stoves', name: 'Woodburners/Stoves', count: 0 },
+  { id: 'accessories', name: 'Accessories', count: 0 }
 ]
 
 function ProductsPageContent() {
@@ -138,7 +144,7 @@ function ProductsPageContent() {
         <div className="absolute inset-0 bg-black/40"></div>
         <div className="container-custom relative z-10">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Fireplaces</h1>
+            <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Range</h1>
             <p className="text-xl text-white/90 max-w-2xl mx-auto">
               Discover our complete range of premium fireplaces, from traditional limestone to modern electric designs
             </p>

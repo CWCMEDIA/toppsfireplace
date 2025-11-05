@@ -10,9 +10,16 @@ const Footer = () => {
       { name: 'Limestone Fireplaces', href: '/products?category=limestone' },
       { name: 'Marble Fireplaces', href: '/products?category=marble' },
       { name: 'Granite Fireplaces', href: '/products?category=granite' },
-      { name: 'Gas Fires', href: '/products?category=electric' },
+      { name: 'Travertine Fireplaces', href: '/products?category=travertine' },
+      { name: 'Cast Iron Fireplaces', href: '/products?category=cast-iron' },
+      { name: 'Wood/MDF Fireplaces', href: '/products?category=wood-mdf' },
+      { name: 'Beams', href: '/products?category=beams' },
+      { name: 'Gas Fires and Stoves', href: '/products?category=gas-fires-stoves' },
       { name: 'Electric Fires', href: '/products?category=electric' },
-      { name: 'Wood Stoves', href: '/products?category=wood' },
+      { name: 'Media Wall Fires', href: '/products?category=media-wall' },
+      { name: 'Electric Suites', href: '/products?category=electric-suites' },
+      { name: 'Woodburners/Stoves', href: '/products?category=woodburners-stoves' },
+      { name: 'Accessories', href: '/products?category=accessories' },
     ],
     company: [
       { name: 'About Us', href: '/about' },
@@ -61,7 +68,7 @@ const Footer = () => {
               </div>
               <div className="flex items-center space-x-3">
                 <Mail className="w-5 h-5 text-primary-500" />
-                <span>topsfireplaces@hotmail.com</span>
+                <span>topsfireplacesshop@hotmail.com</span>
               </div>
               <div className="flex items-start space-x-3">
                 <MapPin className="w-5 h-5 text-primary-500 mt-1" />

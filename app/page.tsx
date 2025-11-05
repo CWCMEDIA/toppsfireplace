@@ -135,9 +135,6 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold mb-2 text-white">Call Now</h3>
                   <p className="text-3xl font-bold mb-4 text-yellow-300">01702 510222</p>
                   <p className="text-white/90 mb-6 font-medium">Free consultation & home assessment</p>
-                  <Link href="/gallery" className="btn-secondary bg-white/25 hover:bg-white/35 text-white border-white/40 font-medium">
-                    360° Virtual Tour
-                  </Link>
                 </div>
               </div>
             </motion.div>

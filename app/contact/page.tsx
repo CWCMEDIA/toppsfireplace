@@ -15,23 +15,78 @@ export default function ContactPage() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     })
+    // Clear error when user starts typing
+    if (submitError) setSubmitError(null)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsSubmitting(true)
+    setSubmitError(null)
     
-    // Simulate form submission
-    setTimeout(() => {
+    try {
+      const formDataToSend = new FormData()
+      formDataToSend.append('access_key', '44a7484b-5a17-4e9a-a361-a3408a87086e')
+      formDataToSend.append('name', formData.name)
+      formDataToSend.append('email', formData.email)
+      formDataToSend.append('phone', formData.phone || 'Not provided')
+      formDataToSend.append('subject', formData.subject)
+      formDataToSend.append('enquiryType', formData.enquiryType)
+      
+      // Format message to include all details
+      const formattedMessage = `Enquiry Type: ${formData.enquiryType}
+      
+Subject: ${formData.subject}
+
+Message:
+${formData.message}
+
+---
+Contact Details:
+Name: ${formData.name}
+Email: ${formData.email}
+Phone: ${formData.phone || 'Not provided'}
+`
+      formDataToSend.append('message', formattedMessage)
+      formDataToSend.append('from_name', formData.name)
+      
+      // Note: Email destination is configured in your web3forms account settings
+      // The 'to' parameter is ignored if the email isn't authorized in your account
+
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        body: formDataToSend
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setIsSubmitted(true)
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: '',
+          enquiryType: 'general',
+        })
+      } else {
+        setSubmitError(data.message || 'Failed to send message. Please try again.')
+      }
+    } catch (error) {
+      console.error('Form submission error:', error)
+      setSubmitError('Something went wrong. Please try again.')
+    } finally {
       setIsSubmitting(false)
-      setIsSubmitted(true)
-    }, 2000)
+    }
   }
 
   const contactInfo = [
@@ -44,7 +99,7 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: 'Email',
-      details: ['topsfireplaces@hotmail.com'],
+      details: ['topsfireplacesshop@hotmail.com'],
       description: 'Send us an email anytime',
     },
     {
@@ -61,9 +116,7 @@ export default function ContactPage() {
       icon: Clock,
       title: 'Opening Hours',
       details: [
-        'Monday - Friday: 9:00 AM - 6:00 PM',
-        'Saturday: 9:00 AM - 4:00 PM',
-        'Sunday: Closed'
+        'Monday-Saturday: 9:00-17:30'
       ],
       description: 'We\'re here to help',
     },
@@ -241,13 +294,22 @@ export default function ContactPage() {
                 />
               </div>
 
+              {submitError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                  <p className="text-sm">{submitError}</p>
+                </div>
+              )}
+
               <button
                 type="submit"
                 disabled={isSubmitting}
                 className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2"
               >
                 {isSubmitting ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Sending...</span>
+                  </>
                 ) : (
                   <>
                     <Send className="w-5 h-5" />
@@ -310,7 +372,7 @@ export default function ContactPage() {
                   <span>Call Now: 01702 510222</span>
                 </a>
                 <a
-                  href="mailto:topsfireplaces@hotmail.com"
+                  href="mailto:topsfireplacesshop@hotmail.com"
                   className="flex items-center space-x-3 text-primary-700 hover:text-primary-800 transition-colors duration-200"
                 >
                   <Mail className="w-5 h-5" />
