@@ -99,7 +99,7 @@ Phone: ${formData.phone || 'Not provided'}
     {
       icon: Mail,
       title: 'Email',
-      details: ['topsfireplacesshop@hotmail.com'],
+      details: ['topsonlineshop@outlook.com'],
       description: 'Send us an email anytime',
     },
     {
@@ -372,7 +372,7 @@ Phone: ${formData.phone || 'Not provided'}
                   <span>Call Now: 01702 510222</span>
                 </a>
                 <a
-                  href="mailto:topsfireplacesshop@hotmail.com"
+                  href="mailto:topsonlineshop@outlook.com"
                   className="flex items-center space-x-3 text-primary-700 hover:text-primary-800 transition-colors duration-200"
                 >
                   <Mail className="w-5 h-5" />
