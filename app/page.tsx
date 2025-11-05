@@ -115,7 +115,7 @@ export default function HomePage() {
                   Shop Here
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
-                <Link href="/contact" className="btn-outline text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary-500">
+                <Link href="/contact" className="btn-outline text-lg px-8 py-4 border-white text-white hover:bg-white hover:text-primary-500 backdrop-blur-xl bg-white/20">
                   Book Consultation
                 </Link>
               </div>
