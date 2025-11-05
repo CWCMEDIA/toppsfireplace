@@ -137,11 +137,11 @@ function ProductsPageContent() {
         <div 
           className="absolute inset-0 bg-cover bg-no-repeat"
           style={{
-            backgroundImage: "url('/bannershop2.jpg')",
-            backgroundPosition: 'center 60%'
+            backgroundImage: "url('/newbanner.jpeg')",
+            backgroundPosition: 'center 75%'
           }}
         ></div>
-        <div className="absolute inset-0 bg-black/40"></div>
+        <div className="absolute inset-0 bg-black/55"></div>
         <div className="container-custom relative z-10">
           <div className="text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Our Range</h1>

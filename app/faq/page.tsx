@@ -128,7 +128,7 @@ export default function FAQPage() {
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/hero-fireplace.jpg')"
+            backgroundImage: "url('/newbanner.jpeg')"
           }}
         ></div>
         <div className="absolute inset-0 bg-black/50"></div>

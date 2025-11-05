@@ -163,7 +163,8 @@ Phone: ${formData.phone || 'Not provided'}
         <div 
           className="absolute inset-0 bg-cover bg-center bg-no-repeat"
           style={{
-            backgroundImage: "url('/hero-fireplace.jpg')"
+            backgroundImage: "url('/newbanner.jpeg')",
+            backgroundPosition: 'center 85%'
           }}
         ></div>
         <div className="absolute inset-0 bg-black/50"></div>
