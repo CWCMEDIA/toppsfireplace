@@ -243,7 +243,7 @@ export default function ProductDetailPage() {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Truck className="w-4 h-4 text-primary-600" />
-                  <span>Free delivery in Essex</span>
+                  <span>Free delivery within 20 miles</span>
                 </div>
               </div>
             </div>
@@ -385,7 +385,7 @@ export default function ProductDetailPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Delivery Areas</h4>
-                        <p className="text-secondary-700">Nationwide delivery service available.</p>
+                        <p className="text-secondary-700">Free delivery within 20 miles. Out of area delivery available please contact for further information.</p>
                       </div>
                       <div>
                         <h4 className="font-semibold text-secondary-800 mb-2">Delivery Time</h4>

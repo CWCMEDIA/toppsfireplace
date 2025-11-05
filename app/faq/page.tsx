@@ -92,7 +92,7 @@ const faqCategories = [
       {
         id: 'delivery',
         question: 'Do you deliver fireplaces?',
-        answer: 'Yes, we provide delivery services for all our fireplaces. When you purchase a fireplace from us, we can arrange delivery to your home. For installed fireplaces, delivery and installation are included in our service.',
+        answer: 'We provide free delivery within 20 miles. Out of area delivery is available - please contact us for further information. For installed fireplaces, delivery and installation are included in our service.',
       },
       {
         id: 'warranty',

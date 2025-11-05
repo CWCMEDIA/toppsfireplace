@@ -197,12 +197,10 @@ export default function CartPage() {
                   </span>
                 </div>
                 
-                {delivery > 0 && (
-                  <div className="text-sm text-secondary-600 bg-primary-50 p-3 rounded-lg">
-                    <Truck className="w-4 h-4 inline mr-1" />
-                    Add £{(500 - subtotal).toFixed(2)} more for free delivery
-                  </div>
-                )}
+                <div className="text-sm text-secondary-600 bg-primary-50 p-3 rounded-lg">
+                  <Truck className="w-4 h-4 inline mr-1" />
+                  Free delivery within 20 miles. Out of area delivery available - please contact for further information.
+                </div>
                 
                 <div className="border-t border-secondary-200 pt-4">
                   <div className="flex justify-between text-lg font-bold">

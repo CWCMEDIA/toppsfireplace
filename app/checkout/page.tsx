@@ -385,7 +385,7 @@ export default function CheckoutPage() {
             </div>
             <div className="flex items-center space-x-2 text-secondary-600">
               <Truck className="w-5 h-5" />
-              <span className="text-sm">Free Delivery</span>
+              <span className="text-sm">Free Delivery (20mi)</span>
             </div>
             <div className="flex items-center space-x-2 text-secondary-600">
               <CreditCard className="w-5 h-5" />

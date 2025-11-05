@@ -109,7 +109,7 @@ const Header = () => {
           <div className="flex justify-center items-center text-xs sm:text-sm">
             <div className="flex items-center flex-wrap justify-center gap-2 sm:gap-3 md:gap-4">
               <span className="whitespace-nowrap">•01702 510222</span>
-              <span className="hidden sm:inline whitespace-nowrap">•Free Delivery</span>
+              <span className="hidden sm:inline whitespace-nowrap">•Free Delivery (20mi)</span>
               <span className="hidden md:inline whitespace-nowrap">•Over 35 Years Experience</span>
               <span className="hidden lg:inline whitespace-nowrap">•14 Day Returns</span>
               <span className="hidden lg:inline whitespace-nowrap">•Manufactures Warranty</span>

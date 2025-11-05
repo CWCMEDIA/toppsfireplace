@@ -127,7 +127,7 @@ export default function TermsOfServicePage() {
               <section className="mb-8">
                 <h2 className="text-2xl font-bold text-secondary-800 mb-4">6. Delivery</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
-                  We deliver to addresses within the United Kingdom. Delivery areas and charges (if any) are displayed during checkout. Delivery times are estimates and are not guaranteed.
+                  We provide free delivery within 20 miles. Out of area delivery is available - please contact us for further information. Delivery times are estimates and are not guaranteed.
                 </p>
                 <p className="text-secondary-700 leading-relaxed mb-4">
                   For large items such as fireplaces, we may offer installation services. Delivery and installation arrangements will be confirmed with you after your order is placed.
