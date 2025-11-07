@@ -92,7 +92,9 @@ function ProductsPageContent() {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
+    const matchesCategory = selectedCategory === 'all' || 
+                           product.category === selectedCategory || 
+                           product.subcategory === selectedCategory
     const matchesBrand = selectedBrand === 'all' || product.brand_id === selectedBrand
     return matchesSearch && matchesCategory && matchesBrand && product.status === 'active'
   })
@@ -111,12 +113,15 @@ function ProductsPageContent() {
     }
   })
 
-  // Update category counts
+  // Update category counts (include both category and subcategory matches)
   const updatedCategories = categories.map(category => ({
     ...category,
     count: category.id === 'all' 
       ? products.filter(p => p.status === 'active').length
-      : products.filter(p => p.category === category.id && p.status === 'active').length
+      : products.filter(p => 
+          p.status === 'active' && 
+          (p.category === category.id || p.subcategory === category.id)
+        ).length
   }))
 
   if (loading) {
