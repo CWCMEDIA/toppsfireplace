@@ -8,6 +8,7 @@ import { motion } from 'framer-motion'
 import { Search, Filter, Star, ShoppingCart, ArrowRight } from 'lucide-react'
 import { Product, Brand } from '@/lib/types'
 import { addToCart as addProductToCart } from '@/lib/cart'
+import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeId } from '@/lib/youtube'
 import toast from 'react-hot-toast'
 
 // Map category IDs to their corresponding subcategory values
@@ -374,7 +375,36 @@ function ProductsPageContent() {
                   <div className="relative overflow-hidden rounded-t-xl">
                     <Link href={`/products/${product.slug || product.id}`} className="block cursor-pointer">
                       <div className="aspect-w-16 aspect-h-12 bg-secondary-100">
-                        {product.images && product.images.length > 0 ? (
+                        {/* Check for video first (videos take priority as title media) */}
+                        {product.videos && product.videos.length > 0 ? (
+                          isYouTubeUrl(product.videos[0]) ? (() => {
+                            const videoId = extractYouTubeId(product.videos[0])
+                            const embedUrl = videoId 
+                              ? `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`
+                              : `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0`
+                            return (
+                              <div className="w-full h-48 relative">
+                                <iframe
+                                  src={embedUrl}
+                                  title={product.name}
+                                  className="w-full h-full"
+                                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                  allowFullScreen
+                                  style={{ pointerEvents: 'none' }}
+                                />
+                              </div>
+                            )
+                          })() : (
+                            <video
+                              src={product.videos[0]}
+                              autoPlay
+                              loop
+                              muted
+                              playsInline
+                              className="w-full h-48 object-cover"
+                            />
+                          )
+                        ) : product.images && product.images.length > 0 ? (
                           <img
                             src={product.images[0]}
                             alt={product.name}

@@ -80,6 +80,7 @@ credentials.json
 *.key
 *.crt
 *.cert
+replaceme.md
 
 # Logs
 *.log

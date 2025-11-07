@@ -125,20 +125,28 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     setUploadingVideo(true)
     try {
       for (const file of Array.from(files)) {
-        const formData = new FormData()
-        formData.append('file', file)
-        formData.append('folder', 'products')
-        formData.append('fileType', 'video')
+        const uploadFormData = new FormData()
+        uploadFormData.append('file', file)
+        uploadFormData.append('folder', 'products')
+        uploadFormData.append('fileType', 'video')
+        // Pass product info for YouTube uploads
+        uploadFormData.append('productName', formData.name || 'Product Video')
+        uploadFormData.append('productDescription', formData.description || '')
 
         const response = await fetch('/api/upload', {
           method: 'POST',
-          body: formData
+          body: uploadFormData
         })
 
         if (response.ok) {
           const data = await response.json()
+          // Store YouTube URL (or Supabase URL if fallback)
           setVideos(prev => [...prev, data.url])
-          toast.success('Video uploaded successfully')
+          if (data.isYouTube) {
+            toast.success('Video uploaded to YouTube successfully')
+          } else {
+            toast.success('Video uploaded successfully')
+          }
         } else {
           const errorData = await response.json()
           toast.error(errorData.error || 'Failed to upload video')
@@ -526,7 +534,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                   onChange={handleVideoUpload}
                   className="hidden"
                 />
-                <span className="text-xs text-secondary-500">Max 50MB per video (MP4, WebM, MOV, AVI)</span>
+                <span className="text-xs text-secondary-500">Max 50MB per video (MP4, WebM, MOV, AVI) Uploads above 50MB may take longer</span>
               </div>
               
               {videos.length > 0 && (

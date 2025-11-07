@@ -22,6 +22,7 @@ import {
 import { motion } from 'framer-motion'
 import { Product } from '@/lib/types'
 import { addToCart } from '@/lib/cart'
+import { isYouTubeUrl, getYouTubeEmbedUrl, extractYouTubeId } from '@/lib/youtube'
 import toast from 'react-hot-toast'
 
 export default function ProductDetailPage() {
@@ -40,7 +41,10 @@ export default function ProductDetailPage() {
   // Combine images and videos into a single media array
   const mediaItems = product ? [
     ...(product.images || []).map(img => ({ type: 'image' as const, url: img })),
-    ...(product.videos || []).map(vid => ({ type: 'video' as const, url: vid }))
+    ...(product.videos || []).map(vid => ({ 
+      type: isYouTubeUrl(vid) ? 'youtube' as const : 'video' as const, 
+      url: vid 
+    }))
   ] : []
 
   useEffect(() => {
@@ -186,6 +190,16 @@ export default function ProductDetailPage() {
                       width={600}
                       height={400}
                       className="w-full h-96 object-contain"
+                    />
+                  </div>
+                ) : mediaItems[selectedMedia].type === 'youtube' ? (
+                  <div className="w-full h-96 relative">
+                    <iframe
+                      src={getYouTubeEmbedUrl(mediaItems[selectedMedia].url)}
+                      title={product.name}
+                      className="w-full h-full"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                      allowFullScreen
                     />
                   </div>
                 ) : (
@@ -575,6 +589,16 @@ export default function ProductDetailPage() {
                 className="max-w-full max-h-[90vh] object-contain"
                 priority
               />
+            ) : mediaItems[lightboxIndex].type === 'youtube' ? (
+              <div className="w-full max-w-5xl aspect-video">
+                <iframe
+                  src={getYouTubeEmbedUrl(mediaItems[lightboxIndex].url)}
+                  title={product.name}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
             ) : (
               <video
                 src={mediaItems[lightboxIndex].url}

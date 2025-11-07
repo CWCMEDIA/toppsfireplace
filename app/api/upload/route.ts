@@ -20,14 +20,177 @@ export async function POST(request: NextRequest) {
 
     // Validate file type based on fileType parameter
     if (fileType === 'video') {
-      const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo']
+      const allowedVideoTypes = ['video/mp4', 'video/webm', 'video/quicktime', 'video/x-msvideo', 'video/mpeg']
       if (!allowedVideoTypes.includes(file.type)) {
-        return NextResponse.json({ error: 'Invalid video file type. Allowed: MP4, WebM, MOV, AVI' }, { status: 400 })
+        return NextResponse.json({ error: 'Invalid video file type. Allowed: MP4, WebM, MOV, AVI, MPEG' }, { status: 400 })
       }
-      // Video size limit: 50MB for free tier, increase if needed
-      const maxVideoSize = 50 * 1024 * 1024
-      if (file.size > maxVideoSize) {
-        return NextResponse.json({ error: 'Video file too large. Maximum size: 50MB' }, { status: 400 })
+      
+      const maxVideoSize = 50 * 1024 * 1024 // 50MB
+      const isUnder50MB = file.size <= maxVideoSize
+      
+      // Check if YouTube upload is enabled (has credentials)
+      const hasYouTubeCredentials = 
+        process.env.YOUTUBE_CLIENT_ID && 
+        process.env.YOUTUBE_CLIENT_SECRET && 
+        process.env.YOUTUBE_REFRESH_TOKEN
+
+      // For videos under 50MB: Upload to Supabase first, then continue to YouTube
+      if (isUnder50MB) {
+        // Read file into buffer once (can be reused for both uploads)
+        const fileBuffer = await file.arrayBuffer()
+        
+        // First, upload to Supabase Storage
+        const timestamp = Date.now()
+        const randomString = Math.random().toString(36).substring(2, 15)
+        const fileExtension = file.name.split('.').pop()
+        const fileName = `${timestamp}-${randomString}.${fileExtension}`
+        const bucketName = folder === 'gallery' ? 'gallery-videos' : 'product-videos'
+
+        // Create File/Blob for Supabase upload
+        const supabaseFile = new File([fileBuffer], file.name, { type: file.type })
+
+        const { data: supabaseData, error: supabaseError } = await supabaseAdmin.storage
+          .from(bucketName)
+          .upload(`${folder}/${fileName}`, supabaseFile, {
+            cacheControl: '3600',
+            upsert: false
+          })
+
+        let supabaseUrl: string | undefined
+        if (supabaseError) {
+          console.warn('Supabase upload failed, continuing to YouTube:', supabaseError.message)
+        } else {
+          // Get Supabase URL (we'll still use YouTube URL as primary)
+          const { data: urlData } = supabaseAdmin.storage
+            .from(bucketName)
+            .getPublicUrl(supabaseData.path)
+          supabaseUrl = urlData.publicUrl
+          console.log('Video uploaded to Supabase:', supabaseUrl)
+        }
+
+        // Now continue to YouTube upload if credentials are available
+        if (hasYouTubeCredentials) {
+          const productName = formData.get('productName') as string || 'Product Video'
+          const productDescription = formData.get('productDescription') as string || ''
+          
+          // Create a new File object from the buffer for YouTube upload
+          const youtubeFile = new File([fileBuffer], file.name, { type: file.type })
+          
+          const youtubeFormData = new FormData()
+          youtubeFormData.append('file', youtubeFile)
+          youtubeFormData.append('title', productName)
+          youtubeFormData.append('description', productDescription)
+          youtubeFormData.append('privacyStatus', 'unlisted')
+
+          try {
+            const youtubeResponse = await fetch(`${request.nextUrl.origin}/api/youtube/upload`, {
+              method: 'POST',
+              headers: {
+                'Cookie': request.headers.get('Cookie') || '',
+              },
+              body: youtubeFormData,
+            })
+
+            if (youtubeResponse.ok) {
+              const youtubeData = await youtubeResponse.json()
+              return NextResponse.json({
+                url: youtubeData.url,
+                videoId: youtubeData.videoId,
+                embedUrl: youtubeData.embedUrl,
+                isYouTube: true,
+                supabaseUrl: supabaseUrl, // Include Supabase URL if upload succeeded
+              })
+            } else {
+              const error = await youtubeResponse.json()
+              console.warn('YouTube upload failed after Supabase upload:', error)
+              // Return Supabase URL if YouTube fails
+              if (supabaseUrl && supabaseData) {
+                return NextResponse.json({
+                  url: supabaseUrl,
+                  path: supabaseData.path,
+                  fileName: fileName,
+                  isYouTube: false,
+                })
+              }
+              return NextResponse.json({ 
+                error: `Both Supabase and YouTube uploads failed. ${error.error || 'Unknown error'}` 
+              }, { status: 500 })
+            }
+          } catch (youtubeError) {
+            console.warn('YouTube upload error after Supabase upload:', youtubeError)
+            // Return Supabase URL if YouTube fails
+            if (supabaseUrl && supabaseData) {
+              return NextResponse.json({
+                url: supabaseUrl,
+                path: supabaseData.path,
+                fileName: fileName,
+                isYouTube: false,
+              })
+            }
+            return NextResponse.json({ 
+              error: `Both Supabase and YouTube uploads failed. ${youtubeError instanceof Error ? youtubeError.message : 'Unknown error'}` 
+            }, { status: 500 })
+          }
+        } else {
+          // No YouTube credentials, just return Supabase URL
+          if (supabaseError) {
+            return NextResponse.json({ error: supabaseError.message }, { status: 500 })
+          }
+          if (!supabaseUrl || !supabaseData) {
+            return NextResponse.json({ error: 'Supabase upload failed' }, { status: 500 })
+          }
+          return NextResponse.json({
+            url: supabaseUrl,
+            path: supabaseData.path,
+            fileName: fileName,
+            isYouTube: false,
+          })
+        }
+      } else {
+        // Videos over 50MB: Go directly to YouTube (Supabase has 50MB limit)
+        if (!hasYouTubeCredentials) {
+          return NextResponse.json({ 
+            error: 'Video file too large for Supabase (50MB limit). YouTube upload is required but not configured.' 
+          }, { status: 400 })
+        }
+
+        const productName = formData.get('productName') as string || 'Product Video'
+        const productDescription = formData.get('productDescription') as string || ''
+        
+        const youtubeFormData = new FormData()
+        youtubeFormData.append('file', file)
+        youtubeFormData.append('title', productName)
+        youtubeFormData.append('description', productDescription)
+        youtubeFormData.append('privacyStatus', 'unlisted')
+
+        try {
+          const youtubeResponse = await fetch(`${request.nextUrl.origin}/api/youtube/upload`, {
+            method: 'POST',
+            headers: {
+              'Cookie': request.headers.get('Cookie') || '',
+            },
+            body: youtubeFormData,
+          })
+
+          if (youtubeResponse.ok) {
+            const youtubeData = await youtubeResponse.json()
+            return NextResponse.json({
+              url: youtubeData.url,
+              videoId: youtubeData.videoId,
+              embedUrl: youtubeData.embedUrl,
+              isYouTube: true,
+            })
+          } else {
+            const error = await youtubeResponse.json()
+            return NextResponse.json({ 
+              error: `YouTube upload failed: ${error.error || 'Unknown error'}` 
+            }, { status: 500 })
+          }
+        } catch (youtubeError: any) {
+          return NextResponse.json({ 
+            error: `YouTube upload error: ${youtubeError.message}` 
+          }, { status: 500 })
+        }
       }
     } else {
       const allowedImageTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
