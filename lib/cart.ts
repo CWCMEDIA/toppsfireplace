@@ -3,6 +3,7 @@
 export interface CartItem {
   id: string
   name: string
+  slug?: string
   price: number
   original_price?: number
   quantity: number
@@ -26,6 +27,7 @@ export function getCart(): CartItem[] {
 export function addToCart(product: {
   id: string
   name: string
+  slug?: string
   price: number
   original_price?: number
   images?: string[]
@@ -46,6 +48,7 @@ export function addToCart(product: {
       cart.push({
         id: product.id,
         name: product.name,
+        slug: product.slug,
         price: product.price,
         original_price: product.original_price,
         quantity,
