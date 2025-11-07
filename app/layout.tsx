@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
-import Header from '@/components/Header'
+import ConditionalHeader from '@/components/ConditionalHeader'
 import Footer from '@/components/Footer'
 import ExitIntentPopup from '@/components/ExitIntentPopup'
 import TabTitleBlinker from '@/components/TabTitleBlinker'
@@ -41,7 +41,7 @@ export default function RootLayout({
       <body className={inter.className}>
         <TabTitleBlinker />
         <ExitIntentPopup />
-        <Header />
+        <ConditionalHeader />
         <main className="min-h-screen">
           {children}
         </main>

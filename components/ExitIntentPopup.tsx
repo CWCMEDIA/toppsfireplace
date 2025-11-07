@@ -13,15 +13,10 @@ export default function ExitIntentPopup() {
 
   // Don't show popup on admin pages
   const isAdminPage = pathname?.startsWith('/admin')
-  
-  // If on admin page, don't render anything
-  if (isAdminPage) {
-    return null
-  }
 
   // Add/remove class to body when popup is shown to darken header
   useEffect(() => {
-    if (showPopup) {
+    if (showPopup && !isAdminPage) {
       document.body.classList.add('exit-intent-popup-active')
     } else {
       document.body.classList.remove('exit-intent-popup-active')
@@ -30,9 +25,14 @@ export default function ExitIntentPopup() {
     return () => {
       document.body.classList.remove('exit-intent-popup-active')
     }
-  }, [showPopup])
+  }, [showPopup, isAdminPage])
 
   useEffect(() => {
+    // Don't set up listeners on admin pages
+    if (isAdminPage) {
+      return
+    }
+
     // If already triggered in this page load, don't set up listeners
     if (hasTriggered) {
       return
@@ -72,7 +72,12 @@ export default function ExitIntentPopup() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseleave', handleMouseLeave)
     }
-  }, [hasTriggered])
+  }, [hasTriggered, isAdminPage])
+
+  // If on admin page, don't render anything
+  if (isAdminPage) {
+    return null
+  }
 
   const handleClose = () => {
     setShowPopup(false)

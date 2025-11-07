@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 import Image from 'next/image'
 import { 
   Plus, 
@@ -463,6 +464,9 @@ export default function AdminDashboard() {
                 <p className="text-sm text-secondary-600">Tops Fireplaces Management</p>
               </div>
             </div>
+            <Link href="/" className="text-secondary-600 hover:text-primary-600 transition-colors duration-200">
+              return to home
+            </Link>
             <button
               onClick={handleLogout}
               className="flex items-center space-x-2 px-4 py-2 text-secondary-600 hover:text-red-600 transition-colors duration-200"
