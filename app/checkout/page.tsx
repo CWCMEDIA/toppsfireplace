@@ -17,15 +17,17 @@ interface CartItem {
   price: number
   quantity: number
   image: string
+  in_stock?: boolean
 }
 
 interface CheckoutFormProps {
   cartItems: CartItem[]
   totalAmount: number
   onOrderComplete: (orderId: string) => void
+  hasOutOfStockItems?: boolean
 }
 
-function CheckoutForm({ cartItems, totalAmount, onOrderComplete }: CheckoutFormProps) {
+function CheckoutForm({ cartItems, totalAmount, onOrderComplete, hasOutOfStockItems = false }: CheckoutFormProps) {
   const stripe = useStripe()
   const elements = useElements()
   const [isProcessing, setIsProcessing] = useState(false)
@@ -47,6 +49,12 @@ function CheckoutForm({ cartItems, totalAmount, onOrderComplete }: CheckoutFormP
     event.preventDefault()
 
     if (!stripe || !elements) return
+    
+    // Prevent checkout if any items are out of stock
+    if (hasOutOfStockItems) {
+      toast.error('Cannot checkout with out of stock items. Please remove them from your cart.')
+      return
+    }
 
     setIsProcessing(true)
 
@@ -274,8 +282,10 @@ function CheckoutForm({ cartItems, totalAmount, onOrderComplete }: CheckoutFormP
       <div className="bg-white p-6 rounded-lg shadow-sm border">
         <h3 className="text-lg font-semibold text-secondary-800 mb-4">Order Summary</h3>
         <div className="space-y-3">
-          {cartItems.map((item) => (
-            <div key={item.id} className="flex items-center justify-between">
+          {cartItems.map((item) => {
+            const isOutOfStock = item.in_stock === false
+            return (
+            <div key={item.id} className={`flex items-center justify-between ${isOutOfStock ? 'opacity-60 grayscale' : ''}`}>
               <div className="flex items-center space-x-3">
                 <img
                   src={item.image}
@@ -283,13 +293,16 @@ function CheckoutForm({ cartItems, totalAmount, onOrderComplete }: CheckoutFormP
                   className="w-12 h-12 object-cover rounded-lg"
                 />
                 <div>
-                  <p className="font-medium text-secondary-900">{item.name}</p>
+                  <p className={`font-medium ${isOutOfStock ? 'text-red-600' : 'text-secondary-900'}`}>{item.name}</p>
                   <p className="text-sm text-secondary-500">Qty: {item.quantity}</p>
+                  {isOutOfStock && (
+                    <p className="text-sm font-medium text-red-600 mt-1">Out of stock. Call us for more info</p>
+                  )}
                 </div>
               </div>
               <p className="font-medium text-secondary-900">£{(item.price * item.quantity).toLocaleString()}</p>
             </div>
-          ))}
+          )})}
           <div className="border-t pt-3">
             <div className="flex justify-between text-lg font-semibold text-secondary-900">
               <span>Total</span>
@@ -302,7 +315,7 @@ function CheckoutForm({ cartItems, totalAmount, onOrderComplete }: CheckoutFormP
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || isProcessing}
+        disabled={!stripe || isProcessing || hasOutOfStockItems}
         className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         {isProcessing ? (
@@ -325,6 +338,7 @@ export default function CheckoutPage() {
   const router = useRouter()
   const [cartItems, setCartItems] = useState<CartItem[]>([])
   const [totalAmount, setTotalAmount] = useState(0)
+  const [loadingStock, setLoadingStock] = useState(true)
 
   useEffect(() => {
     // Load cart from localStorage
@@ -333,6 +347,34 @@ export default function CheckoutPage() {
       const cart = JSON.parse(savedCart)
       setCartItems(cart)
       setTotalAmount(cart.reduce((sum: number, item: CartItem) => sum + (item.price * item.quantity), 0))
+      
+      // Fetch stock status for each item
+      const fetchStockStatus = async () => {
+        setLoadingStock(true)
+        try {
+          const itemsWithStock = await Promise.all(
+            cart.map(async (item: CartItem) => {
+              try {
+                const response = await fetch(`/api/products/${item.id}`)
+                if (response.ok) {
+                  const data = await response.json()
+                  return { ...item, in_stock: data.product.in_stock }
+                }
+              } catch (error) {
+                console.error(`Error fetching stock for ${item.id}:`, error)
+              }
+              return { ...item, in_stock: true } // Default to in stock if fetch fails
+            })
+          )
+          setCartItems(itemsWithStock)
+        } catch (error) {
+          console.error('Error fetching stock status:', error)
+        } finally {
+          setLoadingStock(false)
+        }
+      }
+      
+      fetchStockStatus()
     } else {
       router.push('/products')
     }
@@ -360,6 +402,8 @@ export default function CheckoutPage() {
       </div>
     )
   }
+
+  const hasOutOfStockItems = cartItems.some(item => item.in_stock === false)
 
   return (
     <div className="min-h-screen bg-secondary-50">
@@ -393,14 +437,39 @@ export default function CheckoutPage() {
             </div>
           </div>
 
+          {/* Out of Stock Warning */}
+          {hasOutOfStockItems && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+              <p className="text-red-600 font-medium mb-2">
+                Some items in your cart are out of stock. Please return to your cart to remove them or call us for more info.
+              </p>
+              <button
+                onClick={() => router.push('/cart')}
+                className="text-sm text-red-600 hover:text-red-700 underline"
+              >
+                Return to Cart
+              </button>
+            </div>
+          )}
+
           {/* Checkout Form */}
-          <Elements stripe={stripePromise}>
-            <CheckoutForm
-              cartItems={cartItems}
-              totalAmount={totalAmount}
-              onOrderComplete={handleOrderComplete}
-            />
-          </Elements>
+          {!loadingStock && (
+            <Elements stripe={stripePromise}>
+              <CheckoutForm
+                cartItems={cartItems}
+                totalAmount={totalAmount}
+                onOrderComplete={handleOrderComplete}
+                hasOutOfStockItems={hasOutOfStockItems}
+              />
+            </Elements>
+          )}
+          
+          {loadingStock && (
+            <div className="text-center py-12">
+              <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-secondary-600">Checking stock availability...</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

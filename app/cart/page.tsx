@@ -7,26 +7,77 @@ import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck } from '
 import { motion } from 'framer-motion'
 import { getCart, updateCartItemQuantity, removeFromCart, type CartItem } from '@/lib/cart'
 
+interface CartItemWithStock extends CartItem {
+  in_stock?: boolean
+}
+
 export default function CartPage() {
-  const [items, setItems] = useState<CartItem[]>([])
+  const [items, setItems] = useState<CartItemWithStock[]>([])
   const [isCheckingOut, setIsCheckingOut] = useState(false)
+  const [loadingStock, setLoadingStock] = useState(true)
+
+  // Function to fetch stock status for cart items
+  const fetchStockStatus = async (cartItems: CartItem[]) => {
+    setLoadingStock(true)
+    try {
+      const itemsWithStock = await Promise.all(
+        cartItems.map(async (item) => {
+          try {
+            const response = await fetch(`/api/products/${item.id}`)
+            if (response.ok) {
+              const data = await response.json()
+              return { ...item, in_stock: data.product.in_stock }
+            }
+          } catch (error) {
+            console.error(`Error fetching stock for ${item.id}:`, error)
+          }
+          return { ...item, in_stock: true } // Default to in stock if fetch fails
+        })
+      )
+      setItems(itemsWithStock)
+    } catch (error) {
+      console.error('Error fetching stock status:', error)
+    } finally {
+      setLoadingStock(false)
+    }
+  }
 
   useEffect(() => {
     // Load cart from localStorage
-    setItems(getCart())
+    const cartItems = getCart()
+    setItems(cartItems)
+    
+    // Fetch stock status for each item
+    if (cartItems.length > 0) {
+      fetchStockStatus(cartItems)
+    } else {
+      setLoadingStock(false)
+    }
   }, [])
 
   // Listen for storage changes (in case cart is updated from another tab)
   useEffect(() => {
     const handleStorageChange = () => {
-      setItems(getCart())
+      const cartItems = getCart()
+      if (cartItems.length > 0) {
+        fetchStockStatus(cartItems)
+      } else {
+        setItems([])
+        setLoadingStock(false)
+      }
     }
     
     window.addEventListener('storage', handleStorageChange)
     
     // Also listen for custom event for same-tab updates
     const handleCartUpdate = () => {
-      setItems(getCart())
+      const cartItems = getCart()
+      if (cartItems.length > 0) {
+        fetchStockStatus(cartItems)
+      } else {
+        setItems([])
+        setLoadingStock(false)
+      }
     }
     
     window.addEventListener('cartUpdated', handleCartUpdate)
@@ -97,13 +148,15 @@ export default function CartPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2 space-y-6">
-            {items.map((item, index) => (
+            {items.map((item, index) => {
+              const isOutOfStock = item.in_stock === false
+              return (
               <motion.div
                 key={item.id}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
-                className="bg-white rounded-xl shadow-sm p-6"
+                className={`bg-white rounded-xl shadow-sm p-6 ${isOutOfStock ? 'opacity-60 grayscale' : ''}`}
               >
                 <div className="flex items-center space-x-4">
                   {/* Product Image */}
@@ -133,18 +186,26 @@ export default function CartPage() {
                       </p>
                     )}
                     
+                    {isOutOfStock && (
+                      <p className="text-sm font-medium text-red-600 mb-2">
+                        Out of stock. Call us for more info
+                      </p>
+                    )}
+                    
                     <div className="flex items-center space-x-4">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors"
+                          disabled={isOutOfStock}
+                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Minus className="w-4 h-4" />
                         </button>
                         <span className="w-12 text-center font-medium">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors"
+                          disabled={isOutOfStock}
+                          className="w-8 h-8 rounded-full border border-secondary-300 flex items-center justify-center hover:bg-secondary-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           <Plus className="w-4 h-4" />
                         </button>
@@ -169,7 +230,7 @@ export default function CartPage() {
                   </button>
                 </div>
               </motion.div>
-            ))}
+            )})}
           </div>
 
           {/* Order Summary */}
@@ -210,10 +271,18 @@ export default function CartPage() {
                 </div>
               </div>
 
+              {items.some(item => item.in_stock === false) && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600 font-medium">
+                    Some items in your cart are out of stock. Please remove them or call us for more info.
+                  </p>
+                </div>
+              )}
+              
               <button
                 onClick={() => setIsCheckingOut(true)}
-                disabled={isCheckingOut}
-                className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2"
+                disabled={isCheckingOut || items.some(item => item.in_stock === false) || loadingStock}
+                className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isCheckingOut ? (
                   <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
