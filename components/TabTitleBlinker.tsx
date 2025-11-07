@@ -37,7 +37,7 @@ export default function TabTitleBlinker() {
     if (typeof window === 'undefined') return false
     
     const cart = localStorage.getItem('cart')
-    const hasItems = cart && JSON.parse(cart).length > 0
+    const hasItems = !!(cart && JSON.parse(cart).length > 0)
     hasItemsRef.current = hasItems
     
     return hasItems
