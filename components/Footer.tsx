@@ -30,7 +30,6 @@ const Footer = () => {
     ],
     support: [
       { name: 'FAQ', href: '/faq' },
-      { name: 'Warranty', href: '/warranty' },
     ],
   }
 

@@ -63,11 +63,23 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
+    const updates: any = {
       [name]: type === 'number' 
         ? (value === '' || value === '0' ? (name === 'original_price' ? undefined : 0) : parseFloat(value))
         : value
+    }
+    
+    // Auto-set fuel_type to "no-fuel" when category or subcategory is beams/accessories
+    if (name === 'category' || name === 'subcategory') {
+      // Check if category/subcategory is beams or accessories
+      if (value === 'beams' || value === 'accessories') {
+        updates.fuel_type = 'no-fuel'
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      ...updates
     }))
   }
 
@@ -261,9 +273,15 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                 <option value="marble">Marble</option>
                 <option value="granite">Granite</option>
                 <option value="travertine">Travertine</option>
-                <option value="electric">Electric</option>
                 <option value="cast-iron">Cast Iron</option>
-                <option value="wood">Wood</option>
+                <option value="wood-mdf">Wood/MDF</option>
+                <option value="gas">Gas</option>
+                <option value="electric">Electric</option>
+                <option value="media-wall">Media Wall</option>
+                <option value="electric-suites">Electric Suites</option>
+                <option value="woodburners-stoves">Woodburners/Stoves</option>
+                <option value="beams">Beams</option>
+                <option value="accessories">Accessories</option>
               </select>
             </div>
             <div>
@@ -320,6 +338,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                 <option value="electric">Electric</option>
                 <option value="wood">Wood</option>
                 <option value="multi-fuel">Multi-fuel</option>
+                <option value="no-fuel">No Fuel Type</option>
               </select>
             </div>
             <div>

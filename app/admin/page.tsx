@@ -594,8 +594,15 @@ export default function AdminDashboard() {
                 <option value="marble">Marble</option>
                 <option value="granite">Granite</option>
                 <option value="travertine">Travertine</option>
-                <option value="electric">Electric</option>
                 <option value="cast-iron">Cast Iron</option>
+                <option value="wood-mdf">Wood/MDF</option>
+                <option value="gas">Gas</option>
+                <option value="electric">Electric</option>
+                <option value="media-wall">Media Wall</option>
+                <option value="electric-suites">Electric Suites</option>
+                <option value="woodburners-stoves">Woodburners/Stoves</option>
+                <option value="beams">Beams</option>
+                <option value="accessories">Accessories</option>
               </select>
             </div>
           </div>

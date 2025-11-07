@@ -19,6 +19,7 @@ const categoryToSubcategoryMap: Record<string, string> = {
   'cast-iron': 'cast-iron-fireplaces',
   'wood-mdf': 'wood-mdf-fireplaces',
   'beams': 'beams',
+  'gas': 'gas-fires-stoves',
   'gas-fires-stoves': 'gas-fires-stoves',
   'electric': 'electric-fires',
   'media-wall': 'media-wall-fires',
@@ -35,8 +36,9 @@ const categories = [
   { id: 'travertine', name: 'Travertine Fireplaces', count: 0 },
   { id: 'cast-iron', name: 'Cast Iron Fireplaces', count: 0 },
   { id: 'wood-mdf', name: 'Wood/MDF Fireplaces', count: 0 },
-  { id: 'beams', name: 'Beams', count: 0 },
+  { id: 'gas', name: 'Gas', count: 0 },
   { id: 'gas-fires-stoves', name: 'Gas Fires and Stoves', count: 0 },
+  { id: 'beams', name: 'Beams', count: 0 },
   { id: 'electric', name: 'Electric Fires', count: 0 },
   { id: 'media-wall', name: 'Media Wall Fires', count: 0 },
   { id: 'electric-suites', name: 'Electric Suites', count: 0 },
@@ -52,6 +54,7 @@ function ProductsPageContent() {
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [selectedBrand, setSelectedBrand] = useState('all')
+  const [selectedFuelType, setSelectedFuelType] = useState('all')
   const [sortBy, setSortBy] = useState('name')
   const [showFilters, setShowFilters] = useState(false)
 
@@ -127,7 +130,33 @@ function ProductsPageContent() {
     }
     
     const matchesBrand = selectedBrand === 'all' || product.brand_id === selectedBrand
-    return matchesSearch && matchesCategory && matchesBrand && product.status === 'active'
+    
+    // Fuel type matching - handle special cases
+    let matchesFuelType = false
+    if (selectedFuelType === 'all') {
+      matchesFuelType = true
+    } else if (selectedFuelType === 'fireplace') {
+      // "Fireplace" matches products that are fireplaces (not beams/accessories)
+      matchesFuelType = product.category !== 'beams' && 
+                       product.category !== 'accessories' &&
+                       product.subcategory !== 'beams' &&
+                       product.subcategory !== 'accessories'
+    } else if (selectedFuelType === 'beam') {
+      // "Beam" matches products with beams category/subcategory
+      matchesFuelType = product.category === 'beams' || 
+                       product.subcategory === 'beams' ||
+                       product.subcategory === 'beam'
+    } else if (selectedFuelType === 'accessories') {
+      // "Accessories" matches products with accessories category/subcategory
+      matchesFuelType = product.category === 'accessories' || 
+                       product.subcategory === 'accessories' ||
+                       product.subcategory === 'accessorie'
+    } else {
+      // Standard fuel type matching
+      matchesFuelType = product.fuel_type === selectedFuelType
+    }
+    
+    return matchesSearch && matchesCategory && matchesBrand && matchesFuelType && product.status === 'active'
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
@@ -251,6 +280,26 @@ function ProductsPageContent() {
                       </button>
                     ))}
                   </div>
+                </div>
+
+                {/* Fuel Type */}
+                <div>
+                  <h4 className="text-sm font-medium text-secondary-700 mb-3">Fuel Type</h4>
+                  <select
+                    value={selectedFuelType}
+                    onChange={(e) => setSelectedFuelType(e.target.value)}
+                    className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  >
+                    <option value="all">All Fuel Types</option>
+                    <option value="gas">Gas</option>
+                    <option value="electric">Electric</option>
+                    <option value="wood">Wood</option>
+                    <option value="multi-fuel">Multi-fuel</option>
+                    <option value="no-fuel">No Fuel Type</option>
+                    <option value="fireplace">Fireplace</option>
+                    <option value="beam">Beam</option>
+                    <option value="accessories">Accessories</option>
+                  </select>
                 </div>
 
                 {/* Brands */}
@@ -425,6 +474,7 @@ function ProductsPageContent() {
                     setSearchTerm('')
                     setSelectedCategory('all')
                     setSelectedBrand('all')
+                    setSelectedFuelType('all')
                   }}
                   className="btn-primary"
                 >
