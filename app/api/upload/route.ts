@@ -34,118 +34,37 @@ export async function POST(request: NextRequest) {
         process.env.YOUTUBE_CLIENT_SECRET && 
         process.env.YOUTUBE_REFRESH_TOKEN
 
-      // For videos under 50MB: Upload to Supabase first, then continue to YouTube
+      // For videos under 50MB: Upload ONLY to Supabase (skip YouTube)
       if (isUnder50MB) {
-        // Read file into buffer once (can be reused for both uploads)
-        const fileBuffer = await file.arrayBuffer()
-        
-        // First, upload to Supabase Storage
+        // Upload to Supabase Storage only
         const timestamp = Date.now()
         const randomString = Math.random().toString(36).substring(2, 15)
         const fileExtension = file.name.split('.').pop()
         const fileName = `${timestamp}-${randomString}.${fileExtension}`
         const bucketName = folder === 'gallery' ? 'gallery-videos' : 'product-videos'
 
-        // Create File/Blob for Supabase upload
-        const supabaseFile = new File([fileBuffer], file.name, { type: file.type })
-
         const { data: supabaseData, error: supabaseError } = await supabaseAdmin.storage
           .from(bucketName)
-          .upload(`${folder}/${fileName}`, supabaseFile, {
+          .upload(`${folder}/${fileName}`, file, {
             cacheControl: '3600',
             upsert: false
           })
 
-        let supabaseUrl: string | undefined
         if (supabaseError) {
-          console.warn('Supabase upload failed, continuing to YouTube:', supabaseError.message)
-        } else {
-          // Get Supabase URL (we'll still use YouTube URL as primary)
-          const { data: urlData } = supabaseAdmin.storage
-            .from(bucketName)
-            .getPublicUrl(supabaseData.path)
-          supabaseUrl = urlData.publicUrl
-          console.log('Video uploaded to Supabase:', supabaseUrl)
+          return NextResponse.json({ error: supabaseError.message }, { status: 500 })
         }
 
-        // Now continue to YouTube upload if credentials are available
-        if (hasYouTubeCredentials) {
-          const productName = formData.get('productName') as string || 'Product Video'
-          const productDescription = formData.get('productDescription') as string || ''
-          
-          // Create a new File object from the buffer for YouTube upload
-          const youtubeFile = new File([fileBuffer], file.name, { type: file.type })
-          
-          const youtubeFormData = new FormData()
-          youtubeFormData.append('file', youtubeFile)
-          youtubeFormData.append('title', productName)
-          youtubeFormData.append('description', productDescription)
-          youtubeFormData.append('privacyStatus', 'unlisted')
+        // Get public URL
+        const { data: urlData } = supabaseAdmin.storage
+          .from(bucketName)
+          .getPublicUrl(supabaseData.path)
 
-          try {
-            const youtubeResponse = await fetch(`${request.nextUrl.origin}/api/youtube/upload`, {
-              method: 'POST',
-              headers: {
-                'Cookie': request.headers.get('Cookie') || '',
-              },
-              body: youtubeFormData,
-            })
-
-            if (youtubeResponse.ok) {
-              const youtubeData = await youtubeResponse.json()
-              return NextResponse.json({
-                url: youtubeData.url,
-                videoId: youtubeData.videoId,
-                embedUrl: youtubeData.embedUrl,
-                isYouTube: true,
-                supabaseUrl: supabaseUrl, // Include Supabase URL if upload succeeded
-              })
-            } else {
-              const error = await youtubeResponse.json()
-              console.warn('YouTube upload failed after Supabase upload:', error)
-              // Return Supabase URL if YouTube fails
-              if (supabaseUrl && supabaseData) {
-                return NextResponse.json({
-                  url: supabaseUrl,
-                  path: supabaseData.path,
-                  fileName: fileName,
-                  isYouTube: false,
-                })
-              }
-              return NextResponse.json({ 
-                error: `Both Supabase and YouTube uploads failed. ${error.error || 'Unknown error'}` 
-              }, { status: 500 })
-            }
-          } catch (youtubeError) {
-            console.warn('YouTube upload error after Supabase upload:', youtubeError)
-            // Return Supabase URL if YouTube fails
-            if (supabaseUrl && supabaseData) {
-              return NextResponse.json({
-                url: supabaseUrl,
-                path: supabaseData.path,
-                fileName: fileName,
-                isYouTube: false,
-              })
-            }
-            return NextResponse.json({ 
-              error: `Both Supabase and YouTube uploads failed. ${youtubeError instanceof Error ? youtubeError.message : 'Unknown error'}` 
-            }, { status: 500 })
-          }
-        } else {
-          // No YouTube credentials, just return Supabase URL
-          if (supabaseError) {
-            return NextResponse.json({ error: supabaseError.message }, { status: 500 })
-          }
-          if (!supabaseUrl || !supabaseData) {
-            return NextResponse.json({ error: 'Supabase upload failed' }, { status: 500 })
-          }
-          return NextResponse.json({
-            url: supabaseUrl,
-            path: supabaseData.path,
-            fileName: fileName,
-            isYouTube: false,
-          })
-        }
+        return NextResponse.json({
+          url: urlData.publicUrl,
+          path: supabaseData.path,
+          fileName: fileName,
+          isYouTube: false,
+        })
       } else {
         // Videos over 50MB: Go directly to YouTube (Supabase has 50MB limit)
         if (!hasYouTubeCredentials) {

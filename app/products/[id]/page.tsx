@@ -195,7 +195,7 @@ export default function ProductDetailPage() {
                 ) : mediaItems[selectedMedia].type === 'youtube' ? (
                   <div className="w-full h-96 relative">
                     <iframe
-                      src={getYouTubeEmbedUrl(mediaItems[selectedMedia].url)}
+                      src={`${getYouTubeEmbedUrl(mediaItems[selectedMedia].url)}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`}
                       title={product.name}
                       className="w-full h-full"
                       allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
@@ -592,7 +592,7 @@ export default function ProductDetailPage() {
             ) : mediaItems[lightboxIndex].type === 'youtube' ? (
               <div className="w-full max-w-5xl aspect-video">
                 <iframe
-                  src={getYouTubeEmbedUrl(mediaItems[lightboxIndex].url)}
+                  src={`${getYouTubeEmbedUrl(mediaItems[lightboxIndex].url)}?modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`}
                   title={product.name}
                   className="w-full h-full"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"

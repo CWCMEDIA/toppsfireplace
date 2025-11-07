@@ -208,6 +208,12 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     
+    // Prevent submission if videos or images are currently uploading
+    if (uploadingVideo || uploading) {
+      toast.error('Please wait for uploads to complete before saving')
+      return
+    }
+    
     const productData = {
       ...formData,
       // Only include original_price if it's set and greater than 0
@@ -219,6 +225,8 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
       brand_id: formData.brand_id || undefined,
       // Always send specifications object (even if empty) to ensure it replaces the old one
       specifications: formData.specifications || {},
+      // Explicitly ensure in_stock is a boolean (not undefined)
+      in_stock: Boolean(formData.in_stock),
       images,
       videos: videos.length > 0 ? videos : undefined,
       rating: product?.rating || 0,
@@ -697,10 +705,21 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
             </button>
             <button
               type="submit"
-              className="px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 flex items-center space-x-2"
+              disabled={uploadingVideo || uploading}
+              className={`px-6 py-2 bg-primary-600 text-white rounded-lg flex items-center space-x-2 transition-all ${
+                uploadingVideo || uploading
+                  ? 'opacity-50 cursor-not-allowed blur-sm'
+                  : 'hover:bg-primary-700'
+              }`}
             >
               <Save className="w-4 h-4" />
-              <span>{product ? 'Update Product' : 'Add Product'}</span>
+              <span>
+                {uploadingVideo || uploading
+                  ? 'Uploading...'
+                  : product
+                  ? 'Update Product'
+                  : 'Add Product'}
+              </span>
             </button>
           </div>
         </form>

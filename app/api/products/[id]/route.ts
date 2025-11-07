@@ -45,7 +45,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { id, original_price, dimensions, weight, specifications, name, ...updateData } = body
+    const { id, original_price, dimensions, weight, specifications, name, in_stock, ...updateData } = body
 
     // Generate slug if name is being updated
     if (name) {
@@ -61,6 +61,8 @@ export async function PUT(
       // Handle dimensions and weight: set to null if empty string or undefined
       dimensions: dimensions === '' || dimensions === undefined ? null : dimensions,
       weight: weight === '' || weight === undefined ? null : weight,
+      // Explicitly handle in_stock: ensure it's a boolean (not undefined)
+      in_stock: in_stock !== undefined ? Boolean(in_stock) : undefined,
       // CRITICAL: Always replace specifications entirely - never merge
       // If specifications is in the body, use it (even if empty object {}), otherwise keep existing
       specifications: body.specifications !== undefined ? (body.specifications || {}) : undefined,
@@ -114,6 +116,10 @@ export async function PATCH(
     const updateData: any = { ...body, updated_at: new Date().toISOString() }
     if (body.name) {
       updateData.slug = generateSlug(body.name)
+    }
+    // Explicitly ensure in_stock is a boolean if provided
+    if (body.in_stock !== undefined) {
+      updateData.in_stock = Boolean(body.in_stock)
     }
 
     // Determine if params.id is UUID or slug

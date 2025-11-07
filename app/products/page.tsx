@@ -161,6 +161,15 @@ function ProductsPageContent() {
   })
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
+    // First, prioritize in-stock items (in_stock = true comes first)
+    if (a.in_stock !== b.in_stock) {
+      // Convert boolean to number: true = 1, false = 0
+      // If b is in stock and a is not: 1 - 0 = 1 (b comes first)
+      // If a is in stock and b is not: 0 - 1 = -1 (a comes first)
+      return Number(b.in_stock) - Number(a.in_stock)
+    }
+    
+    // If both have same stock status, apply the selected sort
     switch (sortBy) {
       case 'price-low':
         return a.price - b.price
@@ -380,8 +389,8 @@ function ProductsPageContent() {
                           isYouTubeUrl(product.videos[0]) ? (() => {
                             const videoId = extractYouTubeId(product.videos[0])
                             const embedUrl = videoId 
-                              ? `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0`
-                              : `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0`
+                              ? `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&loop=1&playlist=${videoId}&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`
+                              : `${getYouTubeEmbedUrl(product.videos[0])}?autoplay=1&mute=1&controls=0&modestbranding=1&rel=0&showinfo=0&iv_load_policy=3`
                             return (
                               <div className="w-full h-48 relative">
                                 <iframe
@@ -458,9 +467,11 @@ function ProductsPageContent() {
                           </span>
                         )}
                       </div>
-                      <div className="text-sm text-secondary-500">
-                        {product.stock_count} in stock
-                      </div>
+                      {product.in_stock && (
+                        <div className="text-sm text-secondary-500">
+                          {product.stock_count} in stock
+                        </div>
+                      )}
                     </div>
 
                     <div className="space-y-2 mb-4">
