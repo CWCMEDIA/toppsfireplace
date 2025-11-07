@@ -47,14 +47,13 @@ export async function PUT(
     const body = await request.json()
     const { id, original_price, dimensions, weight, specifications, name, in_stock, ...updateData } = body
 
-    // Generate slug if name is being updated
-    if (name) {
-      updateData.slug = generateSlug(name)
-    }
-
     // Explicitly handle original_price: set to null if undefined, otherwise use the value
     const productUpdate: any = {
       ...updateData,
+      // Include name if it's being updated
+      ...(name && { name }),
+      // Generate slug if name is being updated
+      ...(name && { slug: generateSlug(name) }),
       original_price: original_price === undefined || original_price === null || original_price === 0 
         ? null 
         : parseFloat(original_price),
