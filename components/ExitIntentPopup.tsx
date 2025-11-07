@@ -10,9 +10,23 @@ export default function ExitIntentPopup() {
   const [showPopup, setShowPopup] = useState(false)
   const [hasTriggered, setHasTriggered] = useState(false)
   const [shouldShake, setShouldShake] = useState(false)
+  const [delayPassed, setDelayPassed] = useState(false)
 
   // Don't show popup on admin pages
   const isAdminPage = pathname?.startsWith('/admin')
+
+  // Set up 2-second delay timer
+  useEffect(() => {
+    if (isAdminPage) {
+      return
+    }
+
+    const timer = setTimeout(() => {
+      setDelayPassed(true)
+    }, 2000) // 2 seconds
+
+    return () => clearTimeout(timer)
+  }, [isAdminPage])
 
   // Add/remove class to body when popup is shown to darken header
   useEffect(() => {
@@ -33,15 +47,15 @@ export default function ExitIntentPopup() {
       return
     }
 
-    // If already triggered in this page load, don't set up listeners
-    if (hasTriggered) {
-      return
-    }
-
     const handleMouseMove = (e: MouseEvent) => {
+      // Only trigger if delay has passed (10 seconds) and hasn't been triggered yet
+      if (!delayPassed || hasTriggered) {
+        return
+      }
+      
       // Trigger when mouse moves to the very top of the viewport (clientY <= 5)
       // This catches when user moves mouse to address bar/bookmarks
-      if (!hasTriggered && e.clientY <= 5 && e.clientX >= 0) {
+      if (e.clientY <= 5 && e.clientX >= 0) {
         setHasTriggered(true)
         setShowPopup(true)
         // Trigger shake animation after 1 second
@@ -53,7 +67,12 @@ export default function ExitIntentPopup() {
 
     // Also try mouseleave event (works in Chrome/Edge)
     const handleMouseLeave = (e: MouseEvent) => {
-      if (!hasTriggered && e.clientY <= 0) {
+      // Only trigger if delay has passed (10 seconds) and hasn't been triggered yet
+      if (!delayPassed || hasTriggered) {
+        return
+      }
+      
+      if (e.clientY <= 0) {
         setHasTriggered(true)
         setShowPopup(true)
         // Trigger shake animation after 1 second
@@ -72,7 +91,7 @@ export default function ExitIntentPopup() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseleave', handleMouseLeave)
     }
-  }, [hasTriggered, isAdminPage])
+  }, [hasTriggered, isAdminPage, delayPassed])
 
   // If on admin page, don't render anything
   if (isAdminPage) {

@@ -206,6 +206,21 @@ function ProductsPageContent() {
     }
   })
 
+  // Sort categories: "All Products" first, then by count (descending), then alphabetically
+  const sortedCategories = [...updatedCategories].sort((a, b) => {
+    // Always keep "All Products" at the top
+    if (a.id === 'all') return -1
+    if (b.id === 'all') return 1
+    
+    // Sort by count (descending) - highest count first
+    if (b.count !== a.count) {
+      return b.count - a.count
+    }
+    
+    // If counts are equal, sort alphabetically by name
+    return a.name.localeCompare(b.name)
+  })
+
   if (loading) {
     return (
       <div className="min-h-screen bg-secondary-50 flex items-center justify-center">
@@ -276,7 +291,7 @@ function ProductsPageContent() {
                 <div>
                   <h4 className="text-sm font-medium text-secondary-700 mb-3">Categories</h4>
                   <div className="space-y-2">
-                    {updatedCategories.map((category) => (
+                    {sortedCategories.map((category) => (
                       <button
                         key={category.id}
                         onClick={() => setSelectedCategory(category.id)}
