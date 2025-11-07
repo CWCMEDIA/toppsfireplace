@@ -103,13 +103,16 @@ export async function uploadVideoToYouTube(
   }
 
   // Step 3: Upload the actual video file
+  // Convert Buffer to Uint8Array for fetch compatibility
+  const uint8Array = new Uint8Array(videoFile)
+  
   const uploadResponse = await fetch(uploadUrl, {
     method: 'PUT',
     headers: {
       'Content-Type': 'video/*',
       'Content-Length': videoFile.length.toString(),
     },
-    body: videoFile,
+    body: uint8Array,
   })
 
   if (!uploadResponse.ok) {
