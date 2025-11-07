@@ -209,12 +209,7 @@ export default function ProductDetailPage() {
                 {mediaItems.map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => {
-                      setSelectedMedia(index)
-                      if (item.type === 'image') {
-                        openLightbox(index)
-                      }
-                    }}
+                    onClick={() => setSelectedMedia(index)}
                     className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 relative cursor-pointer ${
                       selectedMedia === index ? 'border-primary-600' : 'border-secondary-200'
                     }`}
