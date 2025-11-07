@@ -146,13 +146,6 @@ export default function AdminLoginPage() {
             </button>
           </form>
 
-          {/* Admin Credentials */}
-          <div className="mt-8 p-4 bg-secondary-50 rounded-lg">
-            <h3 className="text-sm font-medium text-secondary-800 mb-2">Admin Credentials:</h3>
-            <p className="text-sm text-secondary-600">Username: Dave</p>
-            <p className="text-sm text-secondary-600">Password: [Contact administrator]</p>
-          </div>
-
           {/* Back to Site */}
           <div className="mt-6 text-center">
             <a

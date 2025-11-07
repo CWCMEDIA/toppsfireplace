@@ -16,9 +16,11 @@ export const metadata: Metadata = {
   authors: [{ name: 'Tops Fireplaces Ltd' }],
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || 'https://topsfireplaces.shop'),
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    icon: [
+      { url: '/Favicon.png', type: 'image/png' },
+    ],
+    shortcut: '/Favicon.png',
+    apple: '/Favicon.png',
   },
   openGraph: {
     title: 'Tops Fireplaces - Premium Fireplaces for Essex & Southend',

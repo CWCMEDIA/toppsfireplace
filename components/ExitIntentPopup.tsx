@@ -1,13 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
 import { X } from 'lucide-react'
 
 export default function ExitIntentPopup() {
+  const pathname = usePathname()
   const [showPopup, setShowPopup] = useState(false)
   const [hasTriggered, setHasTriggered] = useState(false)
   const [shouldShake, setShouldShake] = useState(false)
+
+  // Don't show popup on admin pages
+  const isAdminPage = pathname?.startsWith('/admin')
+  
+  // If on admin page, don't render anything
+  if (isAdminPage) {
+    return null
+  }
 
   // Add/remove class to body when popup is shown to darken header
   useEffect(() => {
