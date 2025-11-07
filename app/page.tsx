@@ -258,7 +258,7 @@ export default function HomePage() {
                   </div>
                   
                   <Link
-                    href={`/products/${product.id}`}
+                    href={`/products/${product.slug || product.id}`}
                     className="btn-primary w-full text-center inline-block"
                   >
                     View Details

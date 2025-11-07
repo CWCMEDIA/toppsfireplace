@@ -10,6 +10,7 @@ export interface Brand {
 export interface Product {
   id: string
   name: string
+  slug?: string
   description: string
   long_description?: string
   price: number

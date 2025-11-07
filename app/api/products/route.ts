@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { Product } from '@/lib/types'
 import { verifyAdmin } from '@/lib/admin-auth'
+import { generateSlug } from '@/lib/utils'
 
 // GET /api/products - Get all products
 export async function GET(request: NextRequest) {
@@ -65,8 +66,12 @@ export async function POST(request: NextRequest) {
 
     const { original_price, ...restFields } = otherFields // Remove original_price from otherFields
 
+    // Generate slug from product name
+    const slug = generateSlug(name)
+
     const productData: Partial<Product> = {
       name,
+      slug,
       description,
       price: parseFloat(price),
       original_price: originalPrice,

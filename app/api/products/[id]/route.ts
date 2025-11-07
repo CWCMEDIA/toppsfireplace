@@ -1,18 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
+import { generateSlug, isUUID } from '@/lib/utils'
 
-// GET /api/products/[id] - Get single product
+// GET /api/products/[id] - Get single product (supports both UUID and slug)
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    const { data, error } = await supabaseAdmin
+    let query = supabaseAdmin
       .from('products')
       .select('*')
-      .eq('id', params.id)
-      .single()
+
+    // Check if it's a UUID or a slug
+    if (isUUID(params.id)) {
+      query = query.eq('id', params.id)
+    } else {
+      query = query.eq('slug', params.id)
+    }
+
+    const { data, error } = await query.single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 404 })
@@ -37,7 +45,12 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { id, original_price, dimensions, weight, specifications, ...updateData } = body
+    const { id, original_price, dimensions, weight, specifications, name, ...updateData } = body
+
+    // Generate slug if name is being updated
+    if (name) {
+      updateData.slug = generateSlug(name)
+    }
 
     // Explicitly handle original_price: set to null if undefined, otherwise use the value
     const productUpdate: any = {
@@ -59,12 +72,19 @@ export async function PUT(
       delete productUpdate.specifications
     }
 
-    const { data, error } = await supabaseAdmin
+    // Determine if params.id is UUID or slug
+    const isIdUUID = isUUID(params.id)
+    let query = supabaseAdmin
       .from('products')
       .update(productUpdate)
-      .eq('id', params.id)
-      .select()
-      .single()
+    
+    if (isIdUUID) {
+      query = query.eq('id', params.id)
+    } else {
+      query = query.eq('slug', params.id)
+    }
+
+    const { data, error } = await query.select().single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -89,16 +109,26 @@ export async function PATCH(
     }
 
     const body = await request.json()
+    
+    // Generate slug if name is being updated
+    const updateData: any = { ...body, updated_at: new Date().toISOString() }
+    if (body.name) {
+      updateData.slug = generateSlug(body.name)
+    }
 
-    const { data, error } = await supabaseAdmin
+    // Determine if params.id is UUID or slug
+    const isIdUUID = isUUID(params.id)
+    let query = supabaseAdmin
       .from('products')
-      .update({
-        ...body,
-        updated_at: new Date().toISOString()
-      })
-      .eq('id', params.id)
-      .select()
-      .single()
+      .update(updateData)
+    
+    if (isIdUUID) {
+      query = query.eq('id', params.id)
+    } else {
+      query = query.eq('slug', params.id)
+    }
+
+    const { data, error } = await query.select().single()
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })
@@ -122,10 +152,19 @@ export async function DELETE(
       return NextResponse.json({ error: authResult.error }, { status: 401 })
     }
 
-    const { error } = await supabaseAdmin
+    // Determine if params.id is UUID or slug
+    const isIdUUID = isUUID(params.id)
+    let query = supabaseAdmin
       .from('products')
       .delete()
-      .eq('id', params.id)
+    
+    if (isIdUUID) {
+      query = query.eq('id', params.id)
+    } else {
+      query = query.eq('slug', params.id)
+    }
+
+    const { error } = await query
 
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 })

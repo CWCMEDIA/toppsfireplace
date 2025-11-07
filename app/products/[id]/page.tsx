@@ -468,7 +468,7 @@ export default function ProductDetailPage() {
                   whileHover={{ scale: 1.02 }}
                   className="card group hover:shadow-xl transition-shadow duration-300"
                 >
-                  <Link href={`/products/${relatedProduct.id}`}>
+                  <Link href={`/products/${relatedProduct.slug || relatedProduct.id}`}>
                     <div className="aspect-w-4 aspect-h-3 bg-secondary-100 rounded-t-xl overflow-hidden relative">
                       {relatedProduct.images && relatedProduct.images.length > 0 ? (
                         <Image
@@ -485,7 +485,7 @@ export default function ProductDetailPage() {
                     </div>
                   </Link>
                   <div className="p-6">
-                    <Link href={`/products/${relatedProduct.id}`}>
+                    <Link href={`/products/${relatedProduct.slug || relatedProduct.id}`}>
                       <h4 className="text-lg font-semibold text-secondary-800 mb-2 group-hover:text-primary-600 transition-colors duration-200">
                         {relatedProduct.name}
                       </h4>
@@ -500,7 +500,7 @@ export default function ProductDetailPage() {
                         )}
                       </div>
                       <Link
-                        href={`/products/${relatedProduct.id}`}
+                        href={`/products/${relatedProduct.slug || relatedProduct.id}`}
                         className="btn-primary text-sm px-4 py-2"
                       >
                         View

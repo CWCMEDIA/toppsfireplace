@@ -10,6 +10,23 @@ import { Product, Brand } from '@/lib/types'
 import { addToCart as addProductToCart } from '@/lib/cart'
 import toast from 'react-hot-toast'
 
+// Map category IDs to their corresponding subcategory values
+const categoryToSubcategoryMap: Record<string, string> = {
+  'limestone': 'limestone-fireplaces',
+  'marble': 'marble-fireplaces',
+  'granite': 'granite-fireplaces',
+  'travertine': 'travertine-fireplaces',
+  'cast-iron': 'cast-iron-fireplaces',
+  'wood-mdf': 'wood-mdf-fireplaces',
+  'beams': 'beams',
+  'gas-fires-stoves': 'gas-fires-stoves',
+  'electric': 'electric-fires',
+  'media-wall': 'media-wall-fires',
+  'electric-suites': 'electric-suites',
+  'woodburners-stoves': 'woodburners-stoves',
+  'accessories': 'accessories'
+}
+
 const categories = [
   { id: 'all', name: 'All Products', count: 0 },
   { id: 'limestone', name: 'Limestone Fireplaces', count: 0 },
@@ -92,9 +109,23 @@ function ProductsPageContent() {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.material.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.description.toLowerCase().includes(searchTerm.toLowerCase())
-    const matchesCategory = selectedCategory === 'all' || 
-                           product.category === selectedCategory || 
-                           product.subcategory === selectedCategory
+    
+    // Check category match - also check if subcategory matches the mapped subcategory value
+    let matchesCategory = false
+    if (selectedCategory === 'all') {
+      matchesCategory = true
+    } else {
+      // Direct matches
+      matchesCategory = product.category === selectedCategory || 
+                       product.subcategory === selectedCategory
+      
+      // Also check if subcategory matches the mapped value for this category
+      const mappedSubcategory = categoryToSubcategoryMap[selectedCategory]
+      if (mappedSubcategory && product.subcategory === mappedSubcategory) {
+        matchesCategory = true
+      }
+    }
+    
     const matchesBrand = selectedBrand === 'all' || product.brand_id === selectedBrand
     return matchesSearch && matchesCategory && matchesBrand && product.status === 'active'
   })
@@ -114,15 +145,27 @@ function ProductsPageContent() {
   })
 
   // Update category counts (include both category and subcategory matches)
-  const updatedCategories = categories.map(category => ({
-    ...category,
-    count: category.id === 'all' 
-      ? products.filter(p => p.status === 'active').length
-      : products.filter(p => 
-          p.status === 'active' && 
-          (p.category === category.id || p.subcategory === category.id)
-        ).length
-  }))
+  const updatedCategories = categories.map(category => {
+    if (category.id === 'all') {
+      return {
+        ...category,
+        count: products.filter(p => p.status === 'active').length
+      }
+    }
+    
+    // Get the mapped subcategory value for this category
+    const mappedSubcategory = categoryToSubcategoryMap[category.id]
+    
+    return {
+      ...category,
+      count: products.filter(p => 
+        p.status === 'active' && 
+        (p.category === category.id || 
+         p.subcategory === category.id || 
+         (mappedSubcategory && p.subcategory === mappedSubcategory))
+      ).length
+    }
+  })
 
   if (loading) {
     return (
@@ -280,7 +323,7 @@ function ProductsPageContent() {
                   className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group"
                 >
                   <div className="relative overflow-hidden rounded-t-xl">
-                    <Link href={`/products/${product.id}`} className="block cursor-pointer">
+                    <Link href={`/products/${product.slug || product.id}`} className="block cursor-pointer">
                       <div className="aspect-w-16 aspect-h-12 bg-secondary-100">
                         {product.images && product.images.length > 0 ? (
                           <img
@@ -352,7 +395,7 @@ function ProductsPageContent() {
 
                     <div className="flex space-x-2">
                       <Link
-                        href={`/products/${product.id}`}
+                        href={`/products/${product.slug || product.id}`}
                         className="flex-1 bg-primary-600 text-white py-2 px-4 rounded-lg font-medium hover:bg-primary-700 transition-colors text-center"
                       >
                         View Details

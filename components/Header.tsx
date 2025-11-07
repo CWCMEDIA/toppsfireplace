@@ -208,7 +208,7 @@ const Header = () => {
                   {searchResults.map((product) => (
                     <Link
                       key={product.id}
-                      href={`/products/${product.id}`}
+                      href={`/products/${product.slug || product.id}`}
                       onClick={handleResultClick}
                       className="flex items-center space-x-3 p-3 hover:bg-secondary-50 transition-colors border-b border-secondary-100 last:border-b-0"
                     >

@@ -107,7 +107,7 @@ export default function CartPage() {
               >
                 <div className="flex items-center space-x-4">
                   {/* Product Image */}
-                  <Link href={`/products/${item.id}`} className="w-24 h-24 bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
+                  <Link href={`/products/${item.slug || item.id}`} className="w-24 h-24 bg-secondary-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden relative">
                     {item.image ? (
                       <Image
                         src={item.image}
@@ -122,7 +122,7 @@ export default function CartPage() {
 
                   {/* Product Info */}
                   <div className="flex-1 min-w-0">
-                    <Link href={`/products/${item.id}`}>
+                    <Link href={`/products/${item.slug || item.id}`}>
                       <h3 className="text-lg font-semibold text-secondary-800 mb-1 hover:text-primary-600 transition-colors">
                         {item.name}
                       </h3>
