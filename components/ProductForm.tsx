@@ -20,7 +20,7 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
     price: product?.price || 0,
     original_price: product?.original_price || undefined,
     category: product?.category || 'limestone',
-    subcategory: product?.subcategory || 'fireplace',
+    subcategory: product?.subcategory || 'limestone-fireplaces',
     material: product?.material || '',
     fuel_type: product?.fuel_type || 'gas',
     brand_id: product?.brand_id || '',
@@ -276,12 +276,19 @@ export default function ProductForm({ product, onClose, onSave }: ProductFormPro
                 onChange={handleInputChange}
                 className="w-full px-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
-                <option value="fireplace">Fireplace</option>
-                <option value="stove">Stove</option>
-                <option value="electric">Electric</option>
-                <option value="gas">Gas</option>
-                <option value="wood">Wood</option>
-                <option value="suite">Suite</option>
+                <option value="limestone-fireplaces">Limestone Fireplaces</option>
+                <option value="marble-fireplaces">Marble Fireplaces</option>
+                <option value="granite-fireplaces">Granite Fireplaces</option>
+                <option value="travertine-fireplaces">Travertine Fireplaces</option>
+                <option value="cast-iron-fireplaces">Cast Iron Fireplaces</option>
+                <option value="wood-mdf-fireplaces">Wood/MDF Fireplaces</option>
+                <option value="beams">Beams</option>
+                <option value="gas-fires-stoves">Gas Fires and Stoves</option>
+                <option value="electric-fires">Electric Fires</option>
+                <option value="media-wall-fires">Media Wall Fires</option>
+                <option value="electric-suites">Electric Suites</option>
+                <option value="woodburners-stoves">Woodburners/Stoves</option>
+                <option value="accessories">Accessories</option>
               </select>
             </div>
             <div>

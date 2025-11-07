@@ -14,7 +14,10 @@ import {
   ArrowLeft,
   Plus,
   Minus,
-  Phone
+  Phone,
+  X,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { Product } from '@/lib/types'
@@ -31,6 +34,8 @@ export default function ProductDetailPage() {
   const [selectedMedia, setSelectedMedia] = useState(0)
   const [quantity, setQuantity] = useState(1)
   const [activeTab, setActiveTab] = useState('description')
+  const [lightboxOpen, setLightboxOpen] = useState(false)
+  const [lightboxIndex, setLightboxIndex] = useState(0)
 
   // Combine images and videos into a single media array
   const mediaItems = product ? [
@@ -79,6 +84,43 @@ export default function ProductDetailPage() {
       fetchProduct()
     }
   }, [productId])
+
+  const openLightbox = (index: number) => {
+    setLightboxIndex(index)
+    setLightboxOpen(true)
+    document.body.style.overflow = 'hidden' // Prevent body scroll when lightbox is open
+  }
+
+  const closeLightbox = () => {
+    setLightboxOpen(false)
+    document.body.style.overflow = 'unset'
+  }
+
+  const handleNext = () => {
+    setLightboxIndex((prev) => (prev + 1) % mediaItems.length)
+  }
+
+  const handlePrevious = () => {
+    setLightboxIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length)
+  }
+
+  // Keyboard navigation for lightbox
+  useEffect(() => {
+    if (!lightboxOpen || mediaItems.length === 0) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        closeLightbox()
+      } else if (e.key === 'ArrowLeft') {
+        setLightboxIndex((prev) => (prev - 1 + mediaItems.length) % mediaItems.length)
+      } else if (e.key === 'ArrowRight') {
+        setLightboxIndex((prev) => (prev + 1) % mediaItems.length)
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [lightboxOpen, mediaItems.length])
 
   if (loading) {
     return (
@@ -134,18 +176,23 @@ export default function ProductDetailPage() {
             <div className="aspect-w-1 aspect-h-1 bg-white rounded-xl overflow-hidden shadow-lg">
               {mediaItems.length > 0 ? (
                 mediaItems[selectedMedia].type === 'image' ? (
-                  <Image
-                    src={mediaItems[selectedMedia].url}
-                    alt={product.name}
-                    width={600}
-                    height={400}
-                    className="w-full h-96 object-cover"
-                  />
+                  <div 
+                    onClick={() => openLightbox(selectedMedia)}
+                    className="cursor-zoom-in w-full h-96 relative"
+                  >
+                    <Image
+                      src={mediaItems[selectedMedia].url}
+                      alt={product.name}
+                      width={600}
+                      height={400}
+                      className="w-full h-96 object-contain"
+                    />
+                  </div>
                 ) : (
                   <video
                     src={mediaItems[selectedMedia].url}
                     controls
-                    className="w-full h-96 object-cover"
+                    className="w-full h-96 object-contain"
                   >
                     Your browser does not support the video tag.
                   </video>
@@ -162,8 +209,13 @@ export default function ProductDetailPage() {
                 {mediaItems.map((item, index) => (
                   <button
                     key={index}
-                    onClick={() => setSelectedMedia(index)}
-                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 relative ${
+                    onClick={() => {
+                      setSelectedMedia(index)
+                      if (item.type === 'image') {
+                        openLightbox(index)
+                      }
+                    }}
+                    className={`aspect-w-1 aspect-h-1 rounded-lg overflow-hidden border-2 relative cursor-pointer ${
                       selectedMedia === index ? 'border-primary-600' : 'border-secondary-200'
                     }`}
                   >
@@ -173,13 +225,13 @@ export default function ProductDetailPage() {
                         alt={`${product.name} ${index + 1}`}
                         width={100}
                         height={100}
-                        className="w-full h-20 object-cover"
+                        className="w-full h-20 object-contain"
                       />
                     ) : (
                       <>
                         <video
                           src={item.url}
-                          className="w-full h-20 object-cover"
+                          className="w-full h-20 object-contain"
                           muted
                           onMouseEnter={(e) => e.currentTarget.play()}
                           onMouseLeave={(e) => {
@@ -466,6 +518,88 @@ export default function ProductDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Lightbox Modal */}
+      {lightboxOpen && mediaItems.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          onClick={closeLightbox}
+        >
+          {/* Darkened background */}
+          <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" />
+          
+          {/* Close button */}
+          <button
+            onClick={closeLightbox}
+            className="absolute top-4 right-4 z-10 p-2 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-sm"
+            aria-label="Close lightbox"
+          >
+            <X className="w-6 h-6" />
+          </button>
+
+          {/* Navigation buttons */}
+          {mediaItems.length > 1 && (
+            <>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handlePrevious()
+                }}
+                className="absolute left-4 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-sm"
+                aria-label="Previous image"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleNext()
+                }}
+                className="absolute right-4 z-10 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors backdrop-blur-sm"
+                aria-label="Next image"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            </>
+          )}
+
+          {/* Image/Video container */}
+          <div
+            className="relative z-10 max-w-7xl max-h-[90vh] w-full mx-4 flex items-center justify-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {mediaItems[lightboxIndex].type === 'image' ? (
+              <Image
+                src={mediaItems[lightboxIndex].url}
+                alt={`${product.name} - Image ${lightboxIndex + 1}`}
+                width={1200}
+                height={800}
+                className="max-w-full max-h-[90vh] object-contain"
+                priority
+              />
+            ) : (
+              <video
+                src={mediaItems[lightboxIndex].url}
+                controls
+                autoPlay
+                className="max-w-full max-h-[90vh] object-contain"
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
+          </div>
+
+          {/* Image counter */}
+          {mediaItems.length > 1 && (
+            <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white text-sm">
+              {lightboxIndex + 1} / {mediaItems.length}
+            </div>
+          )}
+        </motion.div>
+      )}
     </div>
   )
 }

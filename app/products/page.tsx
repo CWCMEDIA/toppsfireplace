@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { Search, Filter, Star, ShoppingCart, Heart, ArrowRight } from 'lucide-react'
+import { Search, Filter, Star, ShoppingCart, ArrowRight } from 'lucide-react'
 import { Product, Brand } from '@/lib/types'
 import { addToCart as addProductToCart } from '@/lib/cart'
 import toast from 'react-hot-toast'
@@ -275,24 +275,26 @@ function ProductsPageContent() {
                   className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 group"
                 >
                   <div className="relative overflow-hidden rounded-t-xl">
-                    <div className="aspect-w-16 aspect-h-12 bg-secondary-100">
-                      {product.images && product.images.length > 0 ? (
-                        <img
-                          src={product.images[0]}
-                          alt={product.name}
-                          className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                        />
-                      ) : (
-                        <div className="w-full h-48 bg-secondary-100 flex items-center justify-center">
-                          <div className="text-secondary-400 text-center">
-                            <div className="w-12 h-12 bg-secondary-200 rounded-lg flex items-center justify-center mx-auto mb-2">
-                              <span className="text-2xl">🔥</span>
+                    <Link href={`/products/${product.id}`} className="block cursor-pointer">
+                      <div className="aspect-w-16 aspect-h-12 bg-secondary-100">
+                        {product.images && product.images.length > 0 ? (
+                          <img
+                            src={product.images[0]}
+                            alt={product.name}
+                            className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                          />
+                        ) : (
+                          <div className="w-full h-48 bg-secondary-100 flex items-center justify-center">
+                            <div className="text-secondary-400 text-center">
+                              <div className="w-12 h-12 bg-secondary-200 rounded-lg flex items-center justify-center mx-auto mb-2">
+                                <span className="text-2xl">🔥</span>
+                              </div>
+                              <p className="text-sm">No Image</p>
                             </div>
-                            <p className="text-sm">No Image</p>
                           </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    </Link>
                     {product.badge && (
                       <div className="absolute top-4 left-4">
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-600 text-white">
@@ -300,11 +302,6 @@ function ProductsPageContent() {
                         </span>
                       </div>
                     )}
-                    <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <button className="p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-sm hover:bg-white transition-colors">
-                        <Heart className="w-4 h-4 text-secondary-600" />
-                      </button>
-                    </div>
                     {!product.in_stock && (
                       <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <span className="text-white font-semibold">Out of Stock</span>
