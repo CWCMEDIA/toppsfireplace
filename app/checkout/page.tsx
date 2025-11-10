@@ -1,5 +1,7 @@
 'use client'
 
+/// <reference path="../../types/google-maps.d.ts" />
+
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
