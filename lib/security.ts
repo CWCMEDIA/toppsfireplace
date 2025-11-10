@@ -101,6 +101,7 @@ export function validateOrigin(request: NextRequest): boolean {
   try {
     const requestUrl = new URL(request.url)
     const sameOriginMatch = allowedOrigins.some(allowed => {
+      if (!allowed) return false
       try {
         const allowedUrl = new URL(allowed)
         return requestUrl.origin === allowedUrl.origin
