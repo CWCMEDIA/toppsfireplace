@@ -69,6 +69,7 @@ export function validateOrigin(request: NextRequest): boolean {
   // Check origin header (most reliable for CSRF protection)
   if (origin) {
     const originMatch = allowedOrigins.some(allowed => {
+      if (!allowed) return false
       try {
         const originUrl = new URL(origin)
         const allowedUrl = new URL(allowed)
