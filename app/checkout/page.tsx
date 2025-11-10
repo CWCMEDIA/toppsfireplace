@@ -628,7 +628,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
       } else if (paymentIntent && paymentIntent.status === 'requires_action') {
         // Payment requires additional action (e.g., 3D Secure)
         // Stripe will handle the redirect automatically
-        toast.info('Please complete the additional authentication step.')
+        toast('Please complete the additional authentication step.')
       }
     } catch (error) {
       console.error('Payment error:', error)
