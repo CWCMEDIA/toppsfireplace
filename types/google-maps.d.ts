@@ -31,6 +31,10 @@ declare namespace google {
         types: string[]
       }
     }
+    
+    namespace event {
+      function clearInstanceListeners(instance: any): void
+    }
   }
 }
 
