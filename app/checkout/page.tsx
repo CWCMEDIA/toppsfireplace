@@ -384,7 +384,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
 
         // Parse address components
         const addressComponents: { [key: string]: string } = {}
-        place.address_components.forEach((component) => {
+        place.address_components.forEach((component: { types: string[]; long_name: string; short_name: string }) => {
           const type = component.types[0]
           if (type === 'street_number' || type === 'route') {
             addressComponents[type] = component.long_name
@@ -428,7 +428,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
 
         // Parse address components
         const addressComponents: { [key: string]: string } = {}
-        place.address_components.forEach((component) => {
+        place.address_components.forEach((component: { types: string[]; long_name: string; short_name: string }) => {
           const type = component.types[0]
           if (type === 'street_number' || type === 'route') {
             addressComponents[type] = component.long_name
