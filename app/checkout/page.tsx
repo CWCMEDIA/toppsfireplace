@@ -327,8 +327,10 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
   const [googleMapsLoaded, setGoogleMapsLoaded] = useState(false)
   const addressLine1Ref = useRef<HTMLInputElement>(null)
   const postalCodeRef = useRef<HTMLInputElement>(null)
-  const autocompleteLine1Ref = useRef<google.maps.places.Autocomplete | null>(null)
-  const autocompletePostcodeRef = useRef<google.maps.places.Autocomplete | null>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autocompleteLine1Ref = useRef<any>(null)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const autocompletePostcodeRef = useRef<any>(null)
 
   // Small delay after clientSecret is available to ensure Elements is initialized
   useEffect(() => {
