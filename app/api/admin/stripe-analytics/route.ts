@@ -58,7 +58,9 @@ async function handleGetAnalytics(request: NextRequest) {
     // Fetch balance transactions for net amounts
     const balanceTransactions = await Promise.all(
       allCharges
-        .filter(charge => charge.balance_transaction)
+        .filter((charge): charge is typeof charge & { balance_transaction: NonNullable<typeof charge.balance_transaction> } => 
+          !!charge.balance_transaction
+        )
         .map(charge => {
           const balanceTransactionId = typeof charge.balance_transaction === 'string'
             ? charge.balance_transaction
