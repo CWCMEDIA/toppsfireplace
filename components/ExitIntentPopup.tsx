@@ -12,12 +12,15 @@ export default function ExitIntentPopup() {
   const [shouldShake, setShouldShake] = useState(false)
   const [delayPassed, setDelayPassed] = useState(false)
 
-  // Don't show popup on admin pages
+  // Don't show popup on admin pages, checkout, or order success pages
   const isAdminPage = pathname?.startsWith('/admin')
+  const isCheckoutPage = pathname === '/checkout'
+  const isOrderSuccessPage = pathname === '/order-success'
+  const shouldExclude = isAdminPage || isCheckoutPage || isOrderSuccessPage
 
   // Set up 2-second delay timer
   useEffect(() => {
-    if (isAdminPage) {
+    if (shouldExclude) {
       return
     }
 
@@ -26,11 +29,11 @@ export default function ExitIntentPopup() {
     }, 2000) // 2 seconds
 
     return () => clearTimeout(timer)
-  }, [isAdminPage])
+  }, [shouldExclude])
 
   // Add/remove class to body when popup is shown to darken header
   useEffect(() => {
-    if (showPopup && !isAdminPage) {
+    if (showPopup && !shouldExclude) {
       document.body.classList.add('exit-intent-popup-active')
     } else {
       document.body.classList.remove('exit-intent-popup-active')
@@ -39,11 +42,11 @@ export default function ExitIntentPopup() {
     return () => {
       document.body.classList.remove('exit-intent-popup-active')
     }
-  }, [showPopup, isAdminPage])
+  }, [showPopup, shouldExclude])
 
   useEffect(() => {
-    // Don't set up listeners on admin pages
-    if (isAdminPage) {
+    // Don't set up listeners on excluded pages
+    if (shouldExclude) {
       return
     }
 
@@ -91,10 +94,10 @@ export default function ExitIntentPopup() {
       document.removeEventListener('mousemove', handleMouseMove)
       document.removeEventListener('mouseleave', handleMouseLeave)
     }
-  }, [hasTriggered, isAdminPage, delayPassed])
+  }, [hasTriggered, shouldExclude, delayPassed])
 
-  // If on admin page, don't render anything
-  if (isAdminPage) {
+  // If on excluded page, don't render anything
+  if (shouldExclude) {
     return null
   }
 

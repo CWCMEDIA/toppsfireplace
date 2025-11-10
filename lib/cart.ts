@@ -114,6 +114,11 @@ export function removeFromCart(productId: string): CartItem[] {
 export function clearCart(): void {
   if (typeof window === 'undefined') return
   localStorage.removeItem('cart')
+  
+  // Dispatch event to notify other components (like header cart count)
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new Event('cartUpdated'))
+  }
 }
 
 export function getCartTotal(): number {

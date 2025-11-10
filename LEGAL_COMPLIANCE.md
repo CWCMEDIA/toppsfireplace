@@ -124,7 +124,7 @@
 **Currently shown:**
 - ✅ Trading name: Tops Fireplaces
 - ✅ Address: 332 Bridgwater Drive, Westcliff-on-Sea, Essex SS0 0EZ
-- ✅ Email: topsfireplaces@hotmail.com
+- ✅ Email: topsonlineshop@outlook.com
 - ✅ Phone: 01702 510222
 
 **May need (if Ltd company):**

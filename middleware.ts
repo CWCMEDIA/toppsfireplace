@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { jwtVerify } from 'jose'
+import { addSecurityHeaders } from '@/lib/security'
 
 const JWT_SECRET = process.env.JWT_SECRET
 
@@ -9,6 +10,9 @@ if (!JWT_SECRET) {
 
 export async function middleware(request: NextRequest) {
   const token = request.cookies.get('admin-token')?.value
+  
+  // Create response early to add security headers
+  let response: NextResponse
   
   // Allow public routes
   if (
@@ -21,18 +25,21 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/gallery') ||
     request.nextUrl.pathname.startsWith('/contact')
   ) {
-    return NextResponse.next()
+    response = NextResponse.next()
+    return addSecurityHeaders(response)
   }
   
   // Protect upload route - requires admin authentication (handled by route itself)
   if (request.nextUrl.pathname.startsWith('/api/upload')) {
-    return NextResponse.next() // Route will handle admin verification
+    response = NextResponse.next() // Route will handle admin verification
+    return addSecurityHeaders(response)
   }
 
   // Protect admin routes
   if (request.nextUrl.pathname.startsWith('/admin')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/admin-login', request.url))
+      response = NextResponse.redirect(new URL('/admin-login', request.url))
+      return addSecurityHeaders(response)
     }
 
     try {
@@ -40,16 +47,20 @@ export async function middleware(request: NextRequest) {
       const { payload } = await jwtVerify(token, secret)
       
       if (payload.role !== 'admin') {
-        return NextResponse.redirect(new URL('/admin-login', request.url))
+        response = NextResponse.redirect(new URL('/admin-login', request.url))
+        return addSecurityHeaders(response)
       }
 
-      return NextResponse.next()
+      response = NextResponse.next()
+      return addSecurityHeaders(response)
     } catch (error) {
-      return NextResponse.redirect(new URL('/admin-login', request.url))
+      response = NextResponse.redirect(new URL('/admin-login', request.url))
+      return addSecurityHeaders(response)
     }
   }
 
-  return NextResponse.next()
+  response = NextResponse.next()
+  return addSecurityHeaders(response)
 }
 
 export const config = {

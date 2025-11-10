@@ -29,7 +29,7 @@ const faqCategories = [
       {
         id: 'opening-hours',
         question: 'What are your opening hours?',
-        answer: 'Our showroom is open Monday to Saturday from 9:00 AM to 5:30 PM. We are closed on Sundays. Please feel free to call us on 01702 510222 or email us at topsfireplaces@hotmail.com to arrange a visit.',
+        answer: 'Our showroom is open Monday to Saturday from 9:00 AM to 5:30 PM. We are closed on Sundays. Please feel free to call us on 01702 510222 or email us at topsonlineshop@outlook.com to arrange a visit.',
       },
     ],
   },
@@ -102,7 +102,7 @@ const faqCategories = [
       {
         id: 'consultation',
         question: 'Do you offer consultations?',
-        answer: 'Absolutely! We\'re happy to discuss your fireplace needs and help you choose the perfect option for your home. You can visit our showroom, call us on 01702 510222, or email us at topsfireplaces@hotmail.com to arrange a consultation.',
+        answer: 'Absolutely! We\'re happy to discuss your fireplace needs and help you choose the perfect option for your home. You can visit our showroom, call us on 01702 510222, or email us at topsonlineshop@outlook.com to arrange a consultation.',
       },
     ],
   },

@@ -21,11 +21,21 @@ import {
   TrendingUp,
   AlertCircle,
   Star,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Receipt,
+  CheckCircle,
+  XCircle,
+  Clock,
+  Truck,
+  RefreshCw,
+  Settings,
+  BarChart3
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ProductForm from '@/components/ProductForm'
 import GalleryForm from '@/components/GalleryForm'
+import AdminOrdersTour from '@/components/AdminOrdersTour'
+import StripeAnalyticsCharts from '@/components/StripeAnalyticsCharts'
 import { Product, GalleryItem, Brand } from '@/lib/types'
 import toast from 'react-hot-toast'
 
@@ -88,10 +98,20 @@ const sampleProducts = [
 export default function AdminDashboard() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [isLoading, setIsLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<'products' | 'gallery' | 'brands'>('products')
+  const [activeTab, setActiveTab] = useState<'products' | 'gallery' | 'brands' | 'orders' | 'analytics'>('products')
+  const [showTour, setShowTour] = useState(false)
+  const [tourCompleted, setTourCompleted] = useState(false)
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false)
   const [products, setProducts] = useState<Product[]>([])
   const [galleryItems, setGalleryItems] = useState<GalleryItem[]>([])
   const [brands, setBrands] = useState<Brand[]>([])
+  const [orders, setOrders] = useState<any[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [sortBy, setSortBy] = useState<'date' | 'amount' | 'name' | 'productType' | 'paymentStatus' | 'orderStatus'>('date')
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc')
+  const [filterProductType, setFilterProductType] = useState<string>('all')
+  const [orderSearchTerm, setOrderSearchTerm] = useState<string>('')
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const [showAddBrand, setShowAddBrand] = useState(false)
   const [editingBrand, setEditingBrand] = useState<Brand | null>(null)
   const [newBrandName, setNewBrandName] = useState('')
@@ -121,7 +141,87 @@ export default function AdminDashboard() {
     fetchGalleryItems()
     fetchBrands()
     fetchStats()
+    if (activeTab === 'orders') {
+      fetchOrders()
+    }
+    
+    // Check tour completion status on initial load
+    checkTourStatus()
   }, [])
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      fetchOrders()
+    }
+  }, [activeTab])
+
+  const checkTourStatus = async () => {
+    try {
+      const response = await fetch('/api/admin/tour-status', {
+        credentials: 'include',
+        cache: 'no-store' // Ensure we always get fresh data
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        // Strict boolean check - only true means completed
+        const isCompleted = data.completed === true
+        setTourCompleted(isCompleted)
+        
+        // Show tour ONLY if not completed - start on "Your Orders" button
+        if (!isCompleted) {
+          // Small delay to ensure DOM is ready
+          setTimeout(() => {
+            setShowTour(true)
+          }, 500)
+        } else {
+          // Explicitly hide tour if completed
+          setShowTour(false)
+        }
+      } else {
+        // If check fails, don't show tour (safer default)
+        setShowTour(false)
+      }
+    } catch (error) {
+      // If check fails, don't show tour (safer default)
+      setShowTour(false)
+    }
+  }
+
+  const handleResetTour = async () => {
+    try {
+      const response = await fetch('/api/admin/tour-status', {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        setTourCompleted(false)
+        // Show tour after reset
+        setTimeout(() => {
+          setShowTour(true)
+        }, 300)
+      }
+    } catch (error) {
+      // Silently fail
+    }
+  }
+
+  // Close settings menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement
+      const settingsContainer = document.getElementById('settings-menu-container')
+      if (showSettingsMenu && settingsContainer && !settingsContainer.contains(target)) {
+        setShowSettingsMenu(false)
+      }
+    }
+
+    if (showSettingsMenu) {
+      document.addEventListener('mousedown', handleClickOutside)
+      return () => document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSettingsMenu])
 
   useEffect(() => {
     // Check if there's an edit parameter in the URL
@@ -178,6 +278,78 @@ export default function AdminDashboard() {
       setBrands(data.brands || [])
     } catch (error) {
       toast.error('Failed to fetch brands')
+    }
+  }
+
+  const fetchOrders = async () => {
+    setOrdersLoading(true)
+    try {
+      const response = await fetch('/api/orders', {
+        credentials: 'include'
+      })
+      if (response.ok) {
+        const data = await response.json()
+        setOrders(data.orders || [])
+      } else {
+        toast.error('Failed to fetch orders')
+      }
+    } catch (error) {
+      toast.error('Failed to fetch orders')
+    } finally {
+      setOrdersLoading(false)
+    }
+  }
+
+  const handleDeleteAllOrders = async () => {
+    try {
+      const response = await fetch('/api/admin/delete-all-orders', {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        toast.success('All orders deleted successfully')
+        setOrders([])
+        setShowDeleteConfirm(false)
+        // Refresh stats to update order count
+        fetchStats()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to delete orders')
+      }
+    } catch (error) {
+      toast.error('Failed to delete orders')
+    }
+  }
+
+  const handleBackfillFees = async () => {
+    if (!confirm('This will fetch Stripe fee data for all old orders that don\'t have it yet. This may take a few minutes. Continue?')) {
+      return
+    }
+
+    setOrdersLoading(true)
+    try {
+      toast.loading('Backfilling Stripe fees for old orders...', { id: 'backfill' })
+      
+      const response = await fetch('/api/admin/backfill-stripe-fees', {
+        method: 'POST',
+        credentials: 'include'
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast.success(`Backfill complete: ${data.processed} processed, ${data.failed} failed`, { id: 'backfill' })
+        
+        // Refresh orders to show updated data
+        await fetchOrders()
+      } else {
+        const error = await response.json()
+        toast.error(error.error || 'Failed to backfill fees', { id: 'backfill' })
+      }
+    } catch (error) {
+      toast.error('Failed to backfill fees', { id: 'backfill' })
+    } finally {
+      setOrdersLoading(false)
     }
   }
 
@@ -445,7 +617,7 @@ export default function AdminDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-secondary-50">
+    <div className="min-h-screen bg-secondary-50 admin-page-font">
       {/* Header */}
       <header className="bg-white shadow-sm border-b">
         <div className="px-6 py-4">
@@ -510,46 +682,102 @@ export default function AdminDashboard() {
         {/* Tabs */}
         <div className="bg-white rounded-xl shadow-sm mb-6">
           <div className="border-b border-secondary-200">
-            <nav className="flex space-x-8 px-6" aria-label="Tabs">
-              <button
-                onClick={() => setActiveTab('products')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'products'
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Package className="w-5 h-5" />
-                  <span>Products</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('gallery')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'gallery'
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <ImageIcon className="w-5 h-5" />
-                  <span>Gallery</span>
-                </div>
-              </button>
-              <button
-                onClick={() => setActiveTab('brands')}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === 'brands'
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
-                }`}
-              >
-                <div className="flex items-center space-x-2">
-                  <Package className="w-5 h-5" />
-                  <span>Brands</span>
-                </div>
-              </button>
+            <nav className="flex justify-between items-center px-6" aria-label="Tabs">
+              <div className="flex space-x-8">
+                <button
+                  onClick={() => setActiveTab('products')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'products'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-5 h-5" />
+                    <span>Products</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('gallery')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'gallery'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <ImageIcon className="w-5 h-5" />
+                    <span>Gallery</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('brands')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'brands'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Package className="w-5 h-5" />
+                    <span>Brands</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('orders')}
+                  data-tour="orders-tab"
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'orders'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <Receipt className="w-5 h-5" />
+                    <span>Your Orders</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('analytics')}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                    activeTab === 'analytics'
+                      ? 'border-primary-600 text-primary-600'
+                      : 'border-transparent text-secondary-500 hover:text-secondary-700 hover:border-secondary-300'
+                  }`}
+                >
+                  <div className="flex items-center space-x-2">
+                    <BarChart3 className="w-5 h-5" />
+                    <span>Revenue Analytics</span>
+                  </div>
+                </button>
+              </div>
+              
+              {/* Settings Menu */}
+              <div className="relative" id="settings-menu-container">
+                <button
+                  onClick={() => setShowSettingsMenu(!showSettingsMenu)}
+                  className="p-2 text-secondary-500 hover:text-secondary-700 hover:bg-secondary-50 rounded-lg transition-colors"
+                  aria-label="Settings"
+                >
+                  <Settings className="w-5 h-5" />
+                </button>
+                
+                {/* Dropdown Menu */}
+                {showSettingsMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-secondary-200 z-50">
+                    <button
+                      onClick={async () => {
+                        setShowSettingsMenu(false)
+                        await handleResetTour()
+                      }}
+                      className="w-full text-left px-4 py-3 text-sm text-secondary-700 hover:bg-secondary-50 transition-colors flex items-center space-x-2"
+                    >
+                      <RefreshCw className="w-4 h-4" />
+                      <span>Reset Tour</span>
+                    </button>
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         </div>
@@ -888,6 +1116,574 @@ export default function AdminDashboard() {
         </div>
         )}
 
+        {/* Orders Section */}
+        {activeTab === 'orders' && (
+        <div>
+          {/* Orders Table */}
+          <div className="bg-white rounded-xl shadow-sm">
+            <div className="p-6 border-b border-secondary-200">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+              <div>
+                <h2 className="text-2xl font-bold text-secondary-800">Your Orders</h2>
+                <p className="text-secondary-600">View and manage all customer orders</p>
+              </div>
+              <div className="flex items-center space-x-2">
+                <button
+                  onClick={fetchOrders}
+                  data-tour="refresh"
+                  className="btn-secondary flex items-center space-x-2"
+                  disabled={ordersLoading}
+                >
+                  <RefreshCw className={`w-4 h-4 ${ordersLoading ? 'animate-spin' : ''}`} />
+                  <span>Refresh</span>
+                </button>
+                <div className="relative group">
+                  <button
+                    onClick={handleBackfillFees}
+                    data-tour="backfill"
+                    className="btn-secondary flex items-center space-x-2 text-sm"
+                    disabled={ordersLoading}
+                  >
+                    <TrendingUp className="w-4 h-4" />
+                    <span>Backfill Fees</span>
+                  </button>
+                  {/* Tooltip */}
+                  <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 hidden group-hover:block z-10">
+                    <div className="bg-secondary-800 text-white text-xs rounded-lg py-2 px-3 shadow-lg whitespace-nowrap">
+                      If the net amount is not showing, click here to refresh fees for old orders
+                      <div className="absolute top-full left-1/2 transform -translate-x-1/2 -mt-1">
+                        <div className="border-4 border-transparent border-t-secondary-800"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            {/* Search Bar */}
+            <div className="mb-4">
+              <div className="relative" data-tour="search-bar">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-secondary-400" />
+                <input
+                  type="text"
+                  value={orderSearchTerm}
+                  onChange={(e) => setOrderSearchTerm(e.target.value)}
+                  placeholder="Search by order ID, customer name/email/phone, or product name..."
+                  className="w-full pl-10 pr-4 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
+                {orderSearchTerm && (
+                  <button
+                    onClick={() => setOrderSearchTerm('')}
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-secondary-400 hover:text-secondary-600"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Sorting and Filtering Controls */}
+            <div className="flex flex-col sm:flex-row gap-4 items-center" data-tour="sorting">
+              <div className="flex items-center space-x-2">
+                <label className="text-sm font-medium text-secondary-700 whitespace-nowrap">Sort by:</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'date' | 'amount' | 'name' | 'productType' | 'paymentStatus' | 'orderStatus')}
+                  className="px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                >
+                  <option value="date">Date</option>
+                  <option value="amount">Amount</option>
+                  <option value="name">Customer Name (A-Z)</option>
+                  <option value="productType">Product Type</option>
+                  <option value="paymentStatus">Payment Status</option>
+                  <option value="orderStatus">Order Status</option>
+                </select>
+                <button
+                  onClick={() => setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc')}
+                  className="px-3 py-2 border border-secondary-300 rounded-lg hover:bg-secondary-50 transition-colors"
+                  title={sortDirection === 'asc' ? 'Ascending' : 'Descending'}
+                >
+                  {sortDirection === 'asc' ? '↑' : '↓'}
+                </button>
+              </div>
+              
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                className="px-3 py-2 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors flex items-center space-x-2"
+                title="Delete all orders"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span className="text-sm font-medium">Delete All Orders</span>
+              </button>
+              
+              {sortBy === 'productType' && (
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-secondary-700 whitespace-nowrap">Product Type:</label>
+                  <select
+                    value={filterProductType}
+                    onChange={(e) => setFilterProductType(e.target.value)}
+                    className="px-3 py-2 border border-secondary-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-sm"
+                  >
+                    <option value="all">All Types</option>
+                    <option value="limestone">Limestone Fireplaces</option>
+                    <option value="marble">Marble Fireplaces</option>
+                    <option value="granite">Granite Fireplaces</option>
+                    <option value="travertine">Travertine Fireplaces</option>
+                    <option value="cast-iron">Cast Iron Fireplaces</option>
+                    <option value="wood-mdf">Wood/MDF Fireplaces</option>
+                    <option value="beams">Beams</option>
+                    <option value="gas">Gas Fires and Stoves</option>
+                    <option value="electric">Electric Fires</option>
+                    <option value="media-wall">Media Wall Fires</option>
+                    <option value="electric-suites">Electric Suites</option>
+                    <option value="woodburners-stoves">Woodburners/Stoves</option>
+                    <option value="accessories">Accessories</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            </div>
+
+          {ordersLoading ? (
+            <div className="p-12 text-center">
+              <div className="w-12 h-12 border-4 border-primary-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+              <p className="text-secondary-600">Loading orders...</p>
+            </div>
+          ) : (
+            <>
+              {orders.length === 0 ? (
+                <div className="p-12 text-center">
+                  <Receipt className="w-16 h-16 text-secondary-400 mx-auto mb-4" />
+                  <p className="text-secondary-600">No orders found</p>
+                </div>
+              ) : (
+            <div className="overflow-x-auto">
+              <div className="p-6 space-y-6">
+                {(() => {
+                  // Sort and filter orders
+                  let sortedOrders = [...orders]
+                  
+                  // Filter by search term
+                  if (orderSearchTerm.trim()) {
+                    const searchLower = orderSearchTerm.toLowerCase().trim()
+                    sortedOrders = sortedOrders.filter(order => {
+                      // Search in order number
+                      if (order.order_number?.toLowerCase().includes(searchLower)) {
+                        return true
+                      }
+                      
+                      // Search in customer name
+                      if (order.customer_name?.toLowerCase().includes(searchLower)) {
+                        return true
+                      }
+                      
+                      // Search in customer email
+                      if (order.customer_email?.toLowerCase().includes(searchLower)) {
+                        return true
+                      }
+                      
+                      // Search in customer phone
+                      if (order.customer_phone?.toLowerCase().includes(searchLower)) {
+                        return true
+                      }
+                      
+                      // Search in product names
+                      if (order.order_items?.some((item: any) => {
+                        const productName = item.products?.name || ''
+                        return productName.toLowerCase().includes(searchLower)
+                      })) {
+                        return true
+                      }
+                      
+                      return false
+                    })
+                  }
+                  
+                  // Filter by product type if selected
+                  if (filterProductType !== 'all') {
+                    sortedOrders = sortedOrders.filter(order => {
+                      return order.order_items?.some((item: any) => {
+                        const productCategory = item.products?.category || ''
+                        // Map filter values to actual category values
+                        const categoryMap: { [key: string]: string[] } = {
+                          'limestone': ['limestone'],
+                          'marble': ['marble'],
+                          'granite': ['granite'],
+                          'travertine': ['travertine'],
+                          'cast-iron': ['cast-iron'],
+                          'wood-mdf': ['wood-mdf'],
+                          'beams': ['beams'],
+                          'gas': ['gas'],
+                          'electric': ['electric'],
+                          'media-wall': ['media-wall'],
+                          'electric-suites': ['electric-suites'],
+                          'woodburners-stoves': ['woodburners-stoves'],
+                          'accessories': ['accessories']
+                        }
+                        const matchingCategories = categoryMap[filterProductType] || []
+                        return matchingCategories.includes(productCategory.toLowerCase())
+                      })
+                    })
+                  }
+                  
+                  // Sort orders
+                  sortedOrders.sort((a, b) => {
+                    let comparison = 0
+                    
+                    switch (sortBy) {
+                      case 'date':
+                        comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        break
+                      case 'amount':
+                        comparison = parseFloat(a.total_amount.toString()) - parseFloat(b.total_amount.toString())
+                        break
+                      case 'name':
+                        comparison = a.customer_name.localeCompare(b.customer_name)
+                        break
+                      case 'productType':
+                        // Sort by first product's category
+                        const aCategory = a.order_items?.[0]?.products?.category || ''
+                        const bCategory = b.order_items?.[0]?.products?.category || ''
+                        comparison = aCategory.localeCompare(bCategory)
+                        break
+                      case 'paymentStatus':
+                        // Sort by payment status: paid > pending > failed > refunded
+                        const paymentStatusOrder: { [key: string]: number } = {
+                          'paid': 1,
+                          'pending': 2,
+                          'failed': 3,
+                          'refunded': 4
+                        }
+                        const aPaymentStatus = paymentStatusOrder[a.payment_status] || 99
+                        const bPaymentStatus = paymentStatusOrder[b.payment_status] || 99
+                        comparison = aPaymentStatus - bPaymentStatus
+                        // If same status, sort by date
+                        if (comparison === 0) {
+                          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        }
+                        break
+                      case 'orderStatus':
+                        // Sort by order status: processing > shipped > delivered > pending > cancelled
+                        const orderStatusOrder: { [key: string]: number } = {
+                          'processing': 1,
+                          'shipped': 2,
+                          'delivered': 3,
+                          'pending': 4,
+                          'cancelled': 5
+                        }
+                        const aOrderStatus = orderStatusOrder[a.status] || 99
+                        const bOrderStatus = orderStatusOrder[b.status] || 99
+                        comparison = aOrderStatus - bOrderStatus
+                        // If same status, sort by date
+                        if (comparison === 0) {
+                          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+                        }
+                        break
+                    }
+                    
+                    return sortDirection === 'asc' ? comparison : -comparison
+                  })
+                  
+                  return sortedOrders.map((order, index) => {
+                  const deliveryInfo = order.notes ? JSON.parse(order.notes) : {}
+                  const requiresDeliveryQuote = deliveryInfo.requiresDeliveryQuote || false
+                  const deliveryDistance = deliveryInfo.deliveryDistanceMiles || null
+                  
+                  // Alternate background colors for better visual separation
+                  const backgroundColor = index % 2 === 0 ? 'bg-white' : 'bg-secondary-50'
+                  
+                  const getPaymentStatusIcon = () => {
+                    switch (order.payment_status) {
+                      case 'paid':
+                        return <CheckCircle className="w-4 h-4 text-green-600" />
+                      case 'failed':
+                        return <XCircle className="w-4 h-4 text-red-600" />
+                      case 'pending':
+                        return <Clock className="w-4 h-4 text-yellow-600" />
+                      default:
+                        return <Clock className="w-4 h-4 text-secondary-400" />
+                    }
+                  }
+
+                  const getPaymentStatusColor = () => {
+                    switch (order.payment_status) {
+                      case 'paid':
+                        return 'bg-green-100 text-green-800'
+                      case 'failed':
+                        return 'bg-red-100 text-red-800'
+                      case 'pending':
+                        return 'bg-yellow-100 text-yellow-800'
+                      default:
+                        return 'bg-secondary-100 text-secondary-800'
+                    }
+                  }
+
+                  const getOrderStatusColor = () => {
+                    switch (order.status) {
+                      case 'processing':
+                        return 'bg-blue-100 text-blue-800'
+                      case 'shipped':
+                        return 'bg-purple-100 text-purple-800'
+                      case 'delivered':
+                        return 'bg-green-100 text-green-800'
+                      case 'cancelled':
+                        return 'bg-red-100 text-red-800'
+                      default:
+                        return 'bg-secondary-100 text-secondary-800'
+                    }
+                  }
+
+                  const formatAddress = (address: any) => {
+                    if (typeof address === 'string') return address
+                    if (typeof address === 'object' && address !== null) {
+                      const parts = []
+                      if (address.line1) parts.push(address.line1)
+                      if (address.line2) parts.push(address.line2)
+                      if (address.city) parts.push(address.city)
+                      if (address.state) parts.push(address.state)
+                      if (address.postal_code) parts.push(address.postal_code)
+                      if (address.country) parts.push(address.country)
+                      return parts.join(', ')
+                    }
+                    return 'Address not provided'
+                  }
+
+                  return (
+                    <div key={order.id} className={`border border-secondary-200 rounded-lg p-6 hover:shadow-md transition-shadow ${backgroundColor}`}>
+                      {/* Order Header */}
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4 pb-4 border-b border-secondary-200">
+                        <div>
+                          <div className="flex items-center space-x-3 mb-2">
+                            <h3 className="text-lg font-bold text-secondary-800">{order.order_number}</h3>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPaymentStatusColor()}`}>
+                              {getPaymentStatusIcon()}
+                              <span className="ml-1 capitalize">{order.payment_status}</span>
+                            </span>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusColor()}`}>
+                              <Truck className="w-3 h-3 mr-1" />
+                              <span className="capitalize">{order.status}</span>
+                            </span>
+                          </div>
+                          <p className="text-sm text-secondary-600">
+                            {new Date(order.created_at).toLocaleDateString('en-GB', {
+                              day: 'numeric',
+                              month: 'long',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary-600">
+                            £{parseFloat(order.total_amount.toString()).toFixed(2)}
+                          </p>
+                          {(() => {
+                            // Check both net_amount_received column and notes field
+                            let netAmount: number | null = null
+                            let stripeFee: number | null = null
+                            
+                            // First check the dedicated column (preferred)
+                            if (order.net_amount_received) {
+                              netAmount = parseFloat(order.net_amount_received.toString())
+                            }
+                            
+                            // Then check notes (fallback for old data or if column not set)
+                            if (!netAmount && order.notes) {
+                              try {
+                                const orderNotes = JSON.parse(order.notes)
+                                if (orderNotes.netAmountReceived) {
+                                  netAmount = parseFloat(orderNotes.netAmountReceived.toString())
+                                }
+                                if (orderNotes.stripeFee) {
+                                  stripeFee = parseFloat(orderNotes.stripeFee.toString())
+                                }
+                              } catch (e) {
+                                // Notes might not be JSON, ignore
+                              }
+                            }
+                            
+                            // If we have net amount, show it
+                            if (netAmount) {
+                              return (
+                                <div className="mt-2 text-sm">
+                                  <p className="text-secondary-600">
+                                    Net: <span className="font-semibold text-green-600">£{netAmount.toFixed(2)}</span>
+                                  </p>
+                                  {stripeFee && (
+                                    <p className="text-xs text-secondary-500">
+                                      Stripe fee: £{stripeFee.toFixed(2)}
+                                    </p>
+                                  )}
+                                </div>
+                              )
+                            }
+                            return null
+                          })()}
+                          {requiresDeliveryQuote && (
+                            <p className="text-xs text-yellow-600 mt-1">
+                              ⚠️ Delivery quote required {deliveryDistance ? `(${deliveryDistance.toFixed(1)} miles)` : ''}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Customer Information */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <h4 className="text-sm font-semibold text-secondary-700 mb-2">Customer Information</h4>
+                          <div className="space-y-1 text-sm text-secondary-600">
+                            <p><strong>Name:</strong> {order.customer_name}</p>
+                            <p><strong>Email:</strong> {order.customer_email}</p>
+                            {order.customer_phone && (
+                              <p><strong>Phone:</strong> {order.customer_phone}</p>
+                            )}
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="text-sm font-semibold text-secondary-700 mb-2">Shipping Address</h4>
+                          <p className="text-sm text-secondary-600 whitespace-pre-line">
+                            {formatAddress(order.shipping_address)}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Order Items */}
+                      <div className="mb-4">
+                        <h4 className="text-sm font-semibold text-secondary-700 mb-3">Order Items</h4>
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-secondary-50">
+                              <tr>
+                                <th className="px-4 py-2 text-left text-xs font-medium text-secondary-500 uppercase">Product</th>
+                                <th className="px-4 py-2 text-center text-xs font-medium text-secondary-500 uppercase">Quantity</th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-secondary-500 uppercase">Unit Price</th>
+                                <th className="px-4 py-2 text-right text-xs font-medium text-secondary-500 uppercase">Total</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-secondary-200">
+                              {order.order_items?.map((item: any) => (
+                                <tr key={item.id} className="hover:bg-secondary-50">
+                                  <td className="px-4 py-3">
+                                    <div className="flex items-center space-x-3">
+                                      {item.products?.images?.[0] ? (
+                                        <img
+                                          src={item.products.images[0]}
+                                          alt={item.products.name || 'Product'}
+                                          className="w-12 h-12 rounded object-cover"
+                                        />
+                                      ) : (
+                                        <div className="w-12 h-12 rounded bg-secondary-100 flex items-center justify-center">
+                                          <Package className="w-6 h-6 text-secondary-400" />
+                                        </div>
+                                      )}
+                                      <div>
+                                        <p className="font-medium text-secondary-900">
+                                          {item.products?.name || `Product #${item.product_id}`}
+                                        </p>
+                                        <p className="text-xs text-secondary-500">ID: {item.product_id}</p>
+                                      </div>
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-center">
+                                    <span className="font-medium">{item.quantity}</span>
+                                  </td>
+                                  <td className="px-4 py-3 text-right">
+                                    £{parseFloat(item.unit_price.toString()).toFixed(2)}
+                                  </td>
+                                  <td className="px-4 py-3 text-right font-medium">
+                                    £{parseFloat(item.total_price.toString()).toFixed(2)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                            <tfoot className="bg-secondary-50">
+                              <tr>
+                                <td colSpan={3} className="px-4 py-2 text-right font-medium">Subtotal:</td>
+                                <td className="px-4 py-2 text-right font-medium">
+                                  £{parseFloat(order.subtotal.toString()).toFixed(2)}
+                                </td>
+                              </tr>
+                              {order.shipping_amount > 0 && (
+                                <tr>
+                                  <td colSpan={3} className="px-4 py-2 text-right">Shipping:</td>
+                                  <td className="px-4 py-2 text-right">
+                                    £{parseFloat(order.shipping_amount.toString()).toFixed(2)}
+                                  </td>
+                                </tr>
+                              )}
+                              {order.tax_amount > 0 && (
+                                <tr>
+                                  <td colSpan={3} className="px-4 py-2 text-right">Tax:</td>
+                                  <td className="px-4 py-2 text-right">
+                                    £{parseFloat(order.tax_amount.toString()).toFixed(2)}
+                                  </td>
+                                </tr>
+                              )}
+                              <tr>
+                                <td colSpan={3} className="px-4 py-2 text-right font-bold text-lg">Total:</td>
+                                <td className="px-4 py-2 text-right font-bold text-lg text-primary-600">
+                                  £{parseFloat(order.total_amount.toString()).toFixed(2)}
+                                </td>
+                              </tr>
+                            </tfoot>
+                          </table>
+                        </div>
+                      </div>
+
+                      {/* Additional Info */}
+                      {order.stripe_payment_intent_id && (
+                        <div className="text-xs text-secondary-500 mt-4 pt-4 border-t border-secondary-200">
+                          <p><strong>Stripe Payment Intent:</strong> {order.stripe_payment_intent_id}</p>
+                        </div>
+                      )}
+                    </div>
+                  )
+                  })
+                })()}
+                {/* Show message if search returns no results */}
+                {orderSearchTerm.trim() && (() => {
+                  // Check if search has results
+                  const searchLower = orderSearchTerm.toLowerCase().trim()
+                  const hasResults = orders.some(order => {
+                    if (order.order_number?.toLowerCase().includes(searchLower)) return true
+                    if (order.customer_name?.toLowerCase().includes(searchLower)) return true
+                    if (order.customer_email?.toLowerCase().includes(searchLower)) return true
+                    if (order.customer_phone?.toLowerCase().includes(searchLower)) return true
+                    if (order.order_items?.some((item: any) => {
+                      return (item.products?.name || '').toLowerCase().includes(searchLower)
+                    })) return true
+                    return false
+                  })
+                  return !hasResults && orders.length > 0
+                })() && (
+                  <div className="p-12 text-center">
+                    <Search className="w-16 h-16 text-secondary-400 mx-auto mb-4" />
+                    <p className="text-secondary-600 mb-2">No orders found matching "{orderSearchTerm}"</p>
+                    <button
+                      onClick={() => setOrderSearchTerm('')}
+                      className="text-primary-600 hover:text-primary-700 text-sm underline"
+                    >
+                      Clear search
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+              )}
+            </>
+          )}
+        </div>
+        </div>
+        )}
+
+        {/* Revenue Analytics Section */}
+        {activeTab === 'analytics' && (
+        <div>
+          <StripeAnalyticsCharts />
+        </div>
+        )}
+
         {activeTab === 'gallery' && (
         <div className="bg-white rounded-xl shadow-sm">
           <div className="p-6 border-b border-secondary-200">
@@ -1011,6 +1807,37 @@ export default function AdminDashboard() {
         )}
       </div>
 
+      {/* Delete All Orders Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center">
+                <Trash2 className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="text-xl font-bold text-secondary-900">Delete All Orders</h3>
+            </div>
+            <p className="text-secondary-700 mb-6">
+              Are you sure you want to delete <strong>all {orders.length} order{orders.length !== 1 ? 's' : ''}</strong>? This action cannot be undone. All order history will be permanently removed.
+            </p>
+            <div className="flex space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAllOrders}
+                className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
+              >
+                Delete All Orders
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Add/Edit Product Modal */}
       {(showAddProduct || editingProduct) && (
         <ProductForm
@@ -1032,6 +1859,19 @@ export default function AdminDashboard() {
             setEditingGalleryItem(null)
           }}
           onSave={handleSaveGalleryItem}
+        />
+      )}
+
+      {/* Admin Orders Tour */}
+      {showTour && (
+        <AdminOrdersTour
+          onComplete={() => {
+            setShowTour(false)
+            setTourCompleted(true)
+          }}
+          onSwitchToOrders={() => {
+            setActiveTab('orders')
+          }}
         />
       )}
     </div>

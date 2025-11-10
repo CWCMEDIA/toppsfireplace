@@ -147,34 +147,58 @@ export default function CookiePolicyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-secondary-800 mb-4">6. Managing Cookies</h2>
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">6. Cookie Consent and Your Choices</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
-                  You have the right to accept or reject cookies. Most web browsers automatically accept cookies, but you can usually modify your browser setting to decline cookies if you prefer.
+                  When you first visit our website, you will see a cookie consent banner that allows you to choose which types of cookies you want to accept. This banner complies with UK GDPR and PECR (Privacy and Electronic Communications Regulations) requirements.
+                </p>
+                <div className="bg-primary-50 border-l-4 border-primary-600 p-4 rounded-lg mb-4">
+                  <h3 className="font-semibold text-secondary-800 mb-2">Cookie Consent Options</h3>
+                  <p className="text-secondary-700 text-sm mb-2">
+                    Our cookie banner provides you with three options:
+                  </p>
+                  <ul className="list-disc pl-6 space-y-1 text-secondary-700 text-sm">
+                    <li><strong>Accept All:</strong> Accepts all cookies including essential, analytics, marketing, and functional cookies</li>
+                    <li><strong>Reject All:</strong> Rejects all non-essential cookies, allowing only essential cookies necessary for the website to function</li>
+                    <li><strong>Customise:</strong> Allows you to choose which specific cookie categories you want to accept or reject</li>
+                  </ul>
+                </div>
+                <p className="text-secondary-700 leading-relaxed mb-4">
+                  Your cookie preferences are stored in your browser's local storage and will be remembered for future visits. You can change your preferences at any time by clearing your browser's local storage or by contacting us.
                 </p>
                 <p className="text-secondary-700 leading-relaxed mb-4">
-                  However, please note that if you disable cookies, some features of our Site may not operate properly and your online experience may be limited. Essential cookies cannot be disabled as they are necessary for the website to function.
+                  <strong>Important:</strong> Essential cookies cannot be disabled as they are necessary for the website to function properly. If you reject non-essential cookies, some features of our Site may not operate as intended, but core functionality will remain available.
                 </p>
+              </section>
+
+              <section className="mb-8">
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">7. Managing Cookies via Browser Settings</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
-                  To manage cookies, you can:
+                  In addition to our cookie consent banner, you can also manage cookies directly through your browser settings. Most web browsers automatically accept cookies, but you can usually modify your browser setting to decline cookies if you prefer.
                 </p>
-                <ul className="list-disc pl-6 space-y-2 text-secondary-700 mb-4">
-                  <li>Adjust your browser settings to refuse cookies or alert you when cookies are being sent</li>
-                  <li>Delete cookies that have already been set on your device</li>
-                  <li>Use browser extensions or add-ons that block cookies</li>
-                </ul>
                 <p className="text-secondary-700 leading-relaxed mb-4">
                   Instructions for managing cookies in popular browsers:
                 </p>
-                <ul className="list-disc pl-6 space-y-2 text-secondary-700">
+                <ul className="list-disc pl-6 space-y-2 text-secondary-700 mb-4">
                   <li><strong>Chrome:</strong> Settings → Privacy and security → Cookies and other site data</li>
                   <li><strong>Firefox:</strong> Options → Privacy & Security → Cookies and Site Data</li>
                   <li><strong>Safari:</strong> Preferences → Privacy → Cookies and website data</li>
                   <li><strong>Edge:</strong> Settings → Privacy, search, and services → Cookies and site permissions</li>
                 </ul>
+                <p className="text-secondary-700 leading-relaxed mb-4">
+                  You can also:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-secondary-700">
+                  <li>Delete cookies that have already been set on your device</li>
+                  <li>Use browser extensions or add-ons that block cookies</li>
+                  <li>Set your browser to alert you when cookies are being sent</li>
+                </ul>
+                <p className="text-secondary-700 leading-relaxed mt-4">
+                  <strong>Note:</strong> If you disable cookies through your browser settings, some features of our Site may not operate properly and your online experience may be limited.
+                </p>
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-secondary-800 mb-4">7. Third-Party Collection of Information</h2>
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">8. Third-Party Collection of Information</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
                   Our policy only addresses the use and disclosure of information we collect from you. To the extent you disclose your information to other parties or sites throughout the internet, different rules may apply to their use or disclosure of the information you disclose to them.
                 </p>
@@ -187,7 +211,7 @@ export default function CookiePolicyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-secondary-800 mb-4">8. Updates to This Cookie Policy</h2>
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">9. Updates to This Cookie Policy</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
                   We reserve the right to periodically amend or revise the Cookie Policy; material changes will be effective immediately upon the display of the revised Cookie Policy. The last revision will be reflected in the "Last Updated" section at the top of this page.
                 </p>
@@ -197,7 +221,7 @@ export default function CookiePolicyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-secondary-800 mb-4">9. How to Contact Us</h2>
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">10. How to Contact Us</h2>
                 <p className="text-secondary-700 leading-relaxed mb-6">
                   If you have any questions about our use of cookies or this Cookie Policy, please contact us:
                 </p>
@@ -213,7 +237,7 @@ export default function CookiePolicyPage() {
                     <Mail className="w-5 h-5 text-primary-600 mt-1 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-secondary-800">Email</p>
-                      <a href="mailto:topsfireplaces@hotmail.com" className="text-primary-600 hover:text-primary-700">topsfireplaces@hotmail.com</a>
+                      <a href="mailto:topsonlineshop@outlook.com" className="text-primary-600 hover:text-primary-700">topsonlineshop@outlook.com</a>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">

@@ -163,7 +163,7 @@ INSERT INTO products (name, description, price, original_price, category, subcat
 -- Insert default settings
 INSERT INTO settings (key, value, description) VALUES
 ('site_name', 'Tops Fireplaces', 'Website name'),
-('contact_email', 'topsfireplaces@hotmail.com', 'Main contact email'),
+('contact_email', 'topsonlineshop@outlook.com', 'Main contact email'),
 ('contact_phone', '01702 510222', 'Main contact phone'),
 ('free_delivery_threshold', '500', 'Minimum order amount for free delivery'),
 ('delivery_cost', '50', 'Standard delivery cost'),

@@ -3,9 +3,10 @@
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck } from 'lucide-react'
+import { Minus, Plus, Trash2, ShoppingBag, ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { getCart, updateCartItemQuantity, removeFromCart, type CartItem } from '@/lib/cart'
+import { CHECKOUT_BLOCKED, CHECKOUT_BLOCK_MESSAGE } from '@/lib/checkout-config'
 
 interface CartItemWithStock extends CartItem {
   in_stock?: boolean
@@ -13,7 +14,6 @@ interface CartItemWithStock extends CartItem {
 
 export default function CartPage() {
   const [items, setItems] = useState<CartItemWithStock[]>([])
-  const [isCheckingOut, setIsCheckingOut] = useState(false)
   const [loadingStock, setLoadingStock] = useState(true)
 
   // Function to fetch stock status for cart items
@@ -278,21 +278,43 @@ export default function CartPage() {
                   </p>
                 </div>
               )}
+
+              {CHECKOUT_BLOCKED && (
+                <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-start space-x-3">
+                    <Shield className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm text-yellow-800 font-medium mb-1">Checkout Temporarily Unavailable</p>
+                      <p className="text-xs text-yellow-700">{CHECKOUT_BLOCK_MESSAGE}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
               
-              <button
-                onClick={() => setIsCheckingOut(true)}
-                disabled={isCheckingOut || items.some(item => item.in_stock === false) || loadingStock}
-                className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isCheckingOut ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <>
-                    <CreditCard className="w-5 h-5" />
-                    <span>Proceed to Checkout</span>
-                  </>
-                )}
-              </button>
+              {CHECKOUT_BLOCKED ? (
+                <button
+                  disabled
+                  className="w-full bg-secondary-300 text-secondary-500 text-lg py-4 flex items-center justify-center space-x-2 cursor-not-allowed rounded-lg"
+                >
+                  <Shield className="w-5 h-5" />
+                  <span>Checkout Unavailable</span>
+                </button>
+              ) : (
+                <Link
+                  href="/checkout"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full btn-primary text-lg py-4 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  onClick={(e) => {
+                    if (items.some(item => item.in_stock === false) || loadingStock) {
+                      e.preventDefault()
+                    }
+                  }}
+                >
+                  <CreditCard className="w-5 h-5" />
+                  <span>Proceed to Checkout</span>
+                </Link>
+              )}
 
               <div className="mt-4 text-center">
                 <Link href="/products" className="text-sm text-primary-600 hover:text-primary-700">
@@ -317,40 +339,6 @@ export default function CartPage() {
           </div>
         </div>
 
-        {/* Checkout Modal */}
-        {isCheckingOut && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              className="bg-white rounded-xl shadow-2xl w-full max-w-md p-6"
-            >
-              <div className="text-center">
-                <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <CreditCard className="w-8 h-8 text-primary-600" />
-                </div>
-                <h3 className="text-xl font-semibold text-secondary-800 mb-2">Checkout Coming Soon</h3>
-                <p className="text-secondary-600 mb-6">
-                  We're working on our secure checkout system. For now, please call us to complete your order.
-                </p>
-                <div className="space-y-4">
-                  <a
-                    href="tel:01702510222"
-                    className="btn-primary w-full text-center block"
-                  >
-                    Call 01702 510222
-                  </a>
-                  <button
-                    onClick={() => setIsCheckingOut(false)}
-                    className="btn-secondary w-full"
-                  >
-                    Continue Shopping
-                  </button>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
       </div>
     </div>
   )

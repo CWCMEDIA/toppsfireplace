@@ -181,9 +181,23 @@ export default function PrivacyPolicyPage() {
               </section>
 
               <section className="mb-8">
-                <h2 className="text-2xl font-bold text-secondary-800 mb-4">9. Cookies</h2>
+                <h2 className="text-2xl font-bold text-secondary-800 mb-4">9. Cookies and Cookie Consent</h2>
                 <p className="text-secondary-700 leading-relaxed mb-4">
-                  We and our trusted partners use cookies and other technologies in our related services. For detailed information about the cookies we use, please see our <a href="/cookies" className="text-primary-600 hover:text-primary-700 underline">Cookie Policy</a>.
+                  We and our trusted partners use cookies and other technologies in our related services. When you first visit our website, you will see a cookie consent banner that allows you to choose which types of cookies you want to accept.
+                </p>
+                <p className="text-secondary-700 leading-relaxed mb-4">
+                  You can choose to:
+                </p>
+                <ul className="list-disc pl-6 space-y-2 text-secondary-700 mb-4">
+                  <li><strong>Accept All:</strong> Accept all cookies including essential, analytics, marketing, and functional cookies</li>
+                  <li><strong>Reject All:</strong> Reject all non-essential cookies, allowing only essential cookies necessary for the website to function</li>
+                  <li><strong>Customise:</strong> Choose which specific cookie categories you want to accept or reject</li>
+                </ul>
+                <p className="text-secondary-700 leading-relaxed mb-4">
+                  Your cookie preferences are stored in your browser and will be remembered for future visits. You can change your preferences at any time by clearing your browser's local storage or by contacting us.
+                </p>
+                <p className="text-secondary-700 leading-relaxed">
+                  For detailed information about the cookies we use, how we use them, and how to manage them, please see our <a href="/cookies" className="text-primary-600 hover:text-primary-700 underline">Cookie Policy</a>.
                 </p>
               </section>
 
@@ -216,7 +230,7 @@ export default function PrivacyPolicyPage() {
                   We understand the importance of protecting children's privacy, especially in an online environment. The Site is not designed for or directed at children. Under no circumstances shall we allow use of our services by minors without prior consent or authorization by a parent or legal guardian. We do not knowingly collect Personal Information from minors.
                 </p>
                 <p className="text-secondary-700 leading-relaxed">
-                  If a parent or guardian becomes aware that his or her child has provided us with Personal Information without their consent, he or she should contact us at topsfireplaces@hotmail.com.
+                  If a parent or guardian becomes aware that his or her child has provided us with Personal Information without their consent, he or she should contact us at topsonlineshop@outlook.com.
                 </p>
               </section>
 
@@ -257,7 +271,7 @@ export default function PrivacyPolicyPage() {
                     <Mail className="w-5 h-5 text-primary-600 mt-1 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-secondary-800">Email</p>
-                      <a href="mailto:topsfireplaces@hotmail.com" className="text-primary-600 hover:text-primary-700">topsfireplaces@hotmail.com</a>
+                      <a href="mailto:topsonlineshop@outlook.com" className="text-primary-600 hover:text-primary-700">topsonlineshop@outlook.com</a>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">

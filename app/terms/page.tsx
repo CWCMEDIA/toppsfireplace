@@ -57,7 +57,7 @@ export default function TermsOfServicePage() {
                   <p className="text-secondary-700">Westcliff-on-Sea, Essex</p>
                   <p className="text-secondary-700">SS0 0EZ</p>
                   <p className="text-secondary-700 mt-2">Phone: 01702 510222</p>
-                  <p className="text-secondary-700">Email: topsfireplaces@hotmail.com</p>
+                  <p className="text-secondary-700">Email: topsonlineshop@outlook.com</p>
                 </div>
               </section>
 
@@ -152,7 +152,7 @@ export default function TermsOfServicePage() {
                   To exercise your right to cancel, you must inform us of your decision by:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-secondary-700 mb-4">
-                  <li>Email: topsfireplaces@hotmail.com</li>
+                  <li>Email: topsonlineshop@outlook.com</li>
                   <li>Phone: 01702 510222</li>
                   <li>Post: Tops Fireplaces Ltd, 332 Bridgwater Drive, Westcliff-on-Sea, Essex, SS0 0EZ</li>
                 </ul>
@@ -162,7 +162,7 @@ export default function TermsOfServicePage() {
                 <div className="bg-secondary-50 rounded-lg p-4 mb-4">
                   <p className="font-semibold text-secondary-800 mb-2">Cancellation Form</p>
                   <p className="text-secondary-700 text-sm">
-                    To: Tops Fireplaces Ltd, topsfireplaces@hotmail.com<br />
+                    To: Tops Fireplaces Ltd, topsonlineshop@outlook.com<br />
                     I hereby give notice that I cancel my contract of sale of the following goods:<br />
                     [Product details]<br />
                     Ordered on: [Date]<br />
@@ -233,7 +233,7 @@ export default function TermsOfServicePage() {
                   If you have any complaints about our products or services, please contact us:
                 </p>
                 <ul className="list-disc pl-6 space-y-2 text-secondary-700 mb-4">
-                  <li>Email: topsfireplaces@hotmail.com</li>
+                  <li>Email: topsonlineshop@outlook.com</li>
                   <li>Phone: 01702 510222</li>
                   <li>Post: Tops Fireplaces Ltd, 332 Bridgwater Drive, Westcliff-on-Sea, Essex, SS0 0EZ</li>
                 </ul>
@@ -269,7 +269,7 @@ export default function TermsOfServicePage() {
                     <Mail className="w-5 h-5 text-primary-600 mt-1 flex-shrink-0" />
                     <div>
                       <p className="font-semibold text-secondary-800">Email</p>
-                      <a href="mailto:topsfireplaces@hotmail.com" className="text-primary-600 hover:text-primary-700">topsfireplaces@hotmail.com</a>
+                      <a href="mailto:topsonlineshop@outlook.com" className="text-primary-600 hover:text-primary-700">topsonlineshop@outlook.com</a>
                     </div>
                   </div>
                   <div className="flex items-start space-x-3">

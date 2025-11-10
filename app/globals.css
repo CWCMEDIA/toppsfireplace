@@ -414,3 +414,28 @@ body.exit-intent-popup-active header {
     bottom: 150%;
   }
 }
+
+/* Admin Tour Neon Glow Effect */
+.neon-tour-border {
+  border: 2px solid #FCD34D;
+  box-shadow: 
+    0 0 10px #FCD34D,
+    0 0 20px #FCD34D,
+    0 0 30px #FCD34D,
+    inset 0 0 10px rgba(252, 211, 77, 0.2);
+}
+
+/* Admin Page Font Override - Simple system font */
+.admin-page-font {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+.admin-page-font h1,
+.admin-page-font h2,
+.admin-page-font h3,
+.admin-page-font h4,
+.admin-page-font h5,
+.admin-page-font h6 {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-weight: 600;
+}

@@ -197,7 +197,7 @@ The website is fully responsive with breakpoints:
 ## 📞 Support
 
 For technical support or questions:
-- **Email**: topsfireplaces@hotmail.com
+- **Email**: topsonlineshop@outlook.com
 - **Phone**: 01702 510222
 
 ## 📄 License

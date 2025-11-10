@@ -5,6 +5,7 @@ import ConditionalHeader from '@/components/ConditionalHeader'
 import Footer from '@/components/Footer'
 import ExitIntentPopup from '@/components/ExitIntentPopup'
 import TabTitleBlinker from '@/components/TabTitleBlinker'
+import CookieBanner from '@/components/CookieBanner'
 import { Toaster } from 'react-hot-toast'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -46,6 +47,7 @@ export default function RootLayout({
           {children}
         </main>
         <Footer />
+        <CookieBanner />
         <Toaster 
           position="top-right"
           toastOptions={{
