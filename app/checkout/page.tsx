@@ -20,7 +20,7 @@ interface CartItem {
   name: string
   price: number
   quantity: number
-  image: string
+  image?: string
   in_stock?: boolean
 }
 
