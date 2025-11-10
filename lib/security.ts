@@ -84,6 +84,7 @@ export function validateOrigin(request: NextRequest): boolean {
   // Check referer header as fallback
   if (referer) {
     const refererMatch = allowedOrigins.some(allowed => {
+      if (!allowed) return false
       try {
         const refererUrl = new URL(referer)
         const allowedUrl = new URL(allowed)
