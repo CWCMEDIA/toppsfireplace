@@ -510,6 +510,14 @@ export async function sendCustomerOrderConfirmation(order: Order) {
       return { success: false, error: 'Invalid email address' }
     }
 
+    console.log('📧 About to send email via Resend:', {
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Order Confirmation - ${order.order_number}`,
+      hasHtml: !!html,
+      htmlLength: html?.length || 0
+    })
+
     const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to: order.customer_email,
@@ -517,12 +525,25 @@ export async function sendCustomerOrderConfirmation(order: Order) {
       html
     })
 
+    console.log('📧 Resend API response:', {
+      hasData: !!data,
+      hasError: !!error,
+      dataId: data?.id,
+      errorDetails: error ? JSON.stringify(error, null, 2) : null
+    })
+
     if (error) {
       console.error('❌ Resend API error sending customer email:', JSON.stringify(error, null, 2))
       return { success: false, error }
     }
 
-    console.log('✅ Customer email sent successfully to:', order.customer_email, 'Resend ID:', data?.id)
+    if (!data || !data.id) {
+      console.error('❌ Resend returned no data or ID - email may not have been sent!')
+      console.error('❌ Resend response:', JSON.stringify({ data, error }, null, 2))
+      return { success: false, error: 'No email ID returned from Resend' }
+    }
+
+    console.log('✅ Customer email sent successfully to:', order.customer_email, 'Resend ID:', data.id)
     return { success: true, data }
   } catch (error) {
     console.error('Error in sendCustomerOrderConfirmation:', error)

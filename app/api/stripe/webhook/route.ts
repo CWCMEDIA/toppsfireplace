@@ -9,7 +9,18 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!
 
+// Handle GET requests (webhook verification or health checks)
+export async function GET(request: NextRequest) {
+  console.log('🔔 GET request to webhook endpoint - this is likely a health check or verification')
+  return NextResponse.json({ 
+    status: 'ok', 
+    message: 'Webhook endpoint is active. Stripe webhooks should use POST method.',
+    endpoint: '/api/stripe/webhook'
+  })
+}
+
 export async function POST(request: NextRequest) {
+  console.log('🔔 POST request received to webhook endpoint')
   if (!webhookSecret) {
     console.error('STRIPE_WEBHOOK_SECRET is not set in environment variables')
     return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
@@ -34,10 +45,23 @@ export async function POST(request: NextRequest) {
 
   try {
     console.log('🔔 Webhook event received:', event.type, 'Event ID:', event.id)
+    console.log('🔔 Full event data:', JSON.stringify({
+      type: event.type,
+      id: event.id,
+      created: event.created,
+      data: {
+        object: {
+          id: (event.data.object as any)?.id,
+          status: (event.data.object as any)?.status,
+          amount: (event.data.object as any)?.amount
+        }
+      }
+    }, null, 2))
     
     switch (event.type) {
       case 'payment_intent.succeeded':
         console.log('✅ Processing payment_intent.succeeded event...')
+        console.log('✅ Payment Intent ID from webhook:', (event.data.object as Stripe.PaymentIntent).id)
         await handlePaymentSucceeded(event.data.object as Stripe.PaymentIntent)
         break
       case 'payment_intent.payment_failed':
@@ -58,7 +82,10 @@ export async function POST(request: NextRequest) {
 
 async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
   try {
-    console.log('Webhook received: payment_intent.succeeded for:', paymentIntent.id)
+    console.log('🔔 Webhook: handlePaymentSucceeded called for payment intent:', paymentIntent.id)
+    console.log('🔔 Payment Intent Status:', paymentIntent.status)
+    console.log('🔔 Payment Intent Amount:', paymentIntent.amount)
+    console.log('🔔 Payment Intent Metadata:', JSON.stringify(paymentIntent.metadata, null, 2))
     
     // Find the order by payment intent ID with order items
     const { data: order, error } = await supabaseAdmin
@@ -84,7 +111,16 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
     if (error || !order) {
       console.error('❌ Order not found for payment intent:', paymentIntent.id)
       console.error('❌ Supabase error:', JSON.stringify(error, null, 2))
+      console.error('❌ Searching for order with payment intent ID:', paymentIntent.id)
       console.error('❌ This means emails will NOT be sent. Order may not exist yet or payment intent ID mismatch.')
+      
+      // Try to find any orders with this payment intent ID (case-insensitive search)
+      const { data: allOrders } = await supabaseAdmin
+        .from('orders')
+        .select('id, order_number, stripe_payment_intent_id, customer_email')
+        .limit(10)
+      
+      console.error('❌ Recent orders (for debugging):', JSON.stringify(allOrders, null, 2))
       return
     }
 
@@ -208,33 +244,55 @@ async function handlePaymentSucceeded(paymentIntent: Stripe.PaymentIntent) {
       } : null
     })
 
-    // Email 2: Send payment confirmation email to customer
+    // Send emails with proper delays to avoid Resend rate limits
+    // Resend free tier: 3,000 emails/month, 10 requests/second
+    // We'll space them out to be safe: 1.5 seconds between each email
     try {
+      // Email 1: Send payment confirmation email to customer
       if (order.customer_email) {
-        console.log('📧 Sending payment confirmation email to:', order.customer_email)
+        console.log('📧 [1/2] Sending payment confirmation email to:', order.customer_email)
+        console.log('📧 [1/2] Order details:', {
+          order_number: order.order_number,
+          customer_email: order.customer_email,
+          customer_name: order.customer_name,
+          total_amount: order.total_amount
+        })
         const confirmationResult = await sendCustomerOrderConfirmation(order)
         if (confirmationResult.success) {
-          console.log('✅ Payment confirmation email sent successfully to:', order.customer_email)
+          console.log('✅ [1/2] Payment confirmation email sent successfully')
+          console.log('✅ [1/2] Resend Response:', JSON.stringify({
+            resend_id: confirmationResult.data?.id,
+            to: order.customer_email,
+            subject: `Order Confirmation - ${order.order_number}`
+          }, null, 2))
         } else {
-          console.error('❌ Payment confirmation email failed:', confirmationResult.error)
+          console.error('❌ [1/2] Payment confirmation email failed:', JSON.stringify(confirmationResult.error, null, 2))
         }
+      } else {
+        console.error('❌ [1/2] Cannot send confirmation email - no customer email address')
+        console.error('❌ [1/2] Order data:', JSON.stringify({
+          order_id: order.id,
+          order_number: order.order_number,
+          has_customer_email: !!order.customer_email
+        }, null, 2))
       }
 
-      // Wait 600ms to avoid Resend rate limit (2 requests per second)
-      // This ensures we don't hit the rate limit when sending multiple emails
-      await new Promise(resolve => setTimeout(resolve, 600))
+      // Wait 1.5 seconds before sending next email to avoid rate limits
+      console.log('⏳ Waiting 1.5 seconds before sending client notification email...')
+      await new Promise(resolve => setTimeout(resolve, 1500))
 
-      // Send client notification email
-      console.log('📧 Sending client notification email to:', process.env.CLIENT_EMAIL || 'topsonlineshop@outlook.com')
+      // Email 2: Send client notification email
+      console.log('📧 [2/2] Sending client notification email to:', process.env.CLIENT_EMAIL || 'topsonlineshop@outlook.com')
       const clientResult = await sendClientOrderNotification(order)
       if (clientResult.success) {
-        console.log('✅ Client notification email sent successfully')
+        console.log('✅ [2/2] Client notification email sent successfully, Resend ID:', clientResult.data?.id)
       } else {
-        console.error('❌ Client notification email failed:', JSON.stringify(clientResult.error, null, 2))
+        console.error('❌ [2/2] Client notification email failed:', JSON.stringify(clientResult.error, null, 2))
       }
-    } catch (emailError) {
-      console.error('Error sending confirmation emails:', emailError)
-      // Don't fail the webhook if emails fail
+    } catch (emailError: any) {
+      console.error('❌ Exception sending confirmation emails:', emailError?.message || emailError)
+      console.error('Full error:', emailError)
+      // Don't fail the webhook if emails fail - order is still valid
     }
   } catch (error) {
     console.error('Error handling payment succeeded:', error)

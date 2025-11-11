@@ -233,7 +233,10 @@ async function handleCreateOrder(request: NextRequest) {
         customer_email: completeOrder.customer_email,
         customer_name: completeOrder.customer_name,
         order_number: completeOrder.order_number,
-        payment_status: completeOrder.payment_status
+        payment_status: completeOrder.payment_status,
+        payment_status_type: typeof completeOrder.payment_status,
+        payment_status_equals_paid: completeOrder.payment_status === 'paid',
+        payment_status_from_body: paymentStatus
       })
       
       try {
@@ -241,42 +244,61 @@ async function handleCreateOrder(request: NextRequest) {
         if (!completeOrder.customer_email) {
           console.error('❌ No customer email found in order!')
         } else {
-          console.log('📧 Sending payment processing email to:', completeOrder.customer_email)
+          console.log('📧 [0/3] Sending payment processing email to:', completeOrder.customer_email)
           const processingEmailResult = await sendCustomerPaymentProcessing(completeOrder)
           if (processingEmailResult.success) {
-            console.log('✅ Payment processing email sent successfully to:', completeOrder.customer_email)
+            console.log('✅ [0/3] Payment processing email sent successfully to:', completeOrder.customer_email, 'Resend ID:', processingEmailResult.data?.id)
           } else {
-            console.error('❌ Payment processing email failed:', JSON.stringify(processingEmailResult.error, null, 2))
+            console.error('❌ [0/3] Payment processing email failed:', JSON.stringify(processingEmailResult.error, null, 2))
           }
         }
         
-        // Email 2: Send confirmation email ONLY if payment is already paid
+        // Wait 1.5 seconds before sending next email (if payment is already confirmed)
+        // This gives Resend time to process the first email
         if (completeOrder.payment_status === 'paid') {
-          // Wait 600ms to avoid Resend rate limit (2 requests per second)
+          console.log('⏳ Waiting 1.5 seconds before sending confirmation email...')
+          await new Promise(resolve => setTimeout(resolve, 1500))
+        }
+        
+        // Email 2: Send confirmation email ONLY if payment is already paid
+        console.log('🔍 Checking payment status for confirmation email:', {
+          payment_status: completeOrder.payment_status,
+          payment_status_type: typeof completeOrder.payment_status,
+          equals_paid: completeOrder.payment_status === 'paid',
+          equals_paid_string: completeOrder.payment_status === 'paid',
+          paymentStatus_from_body: paymentStatus
+        })
+        
+        if (completeOrder.payment_status === 'paid') {
+          console.log('✅ Payment status is "paid" - will send confirmation email')
+          // Wait 1.5 seconds to avoid Resend rate limit
           // This ensures we don't hit the rate limit when sending multiple emails
-          await new Promise(resolve => setTimeout(resolve, 600))
+          console.log('⏳ Waiting 1.5 seconds before sending confirmation email...')
+          await new Promise(resolve => setTimeout(resolve, 1500))
           
-          console.log('📧 Payment already confirmed - sending confirmation email to:', completeOrder.customer_email)
+          console.log('📧 [1/2] Payment already confirmed - sending confirmation email to:', completeOrder.customer_email)
           const confirmationEmailResult = await sendCustomerOrderConfirmation(completeOrder)
           if (confirmationEmailResult.success) {
-            console.log('✅ Payment confirmation email sent successfully to:', completeOrder.customer_email)
+            console.log('✅ [1/2] Payment confirmation email sent successfully to:', completeOrder.customer_email, 'Resend ID:', confirmationEmailResult.data?.id)
           } else {
-            console.error('❌ Payment confirmation email failed:', JSON.stringify(confirmationEmailResult.error, null, 2))
+            console.error('❌ [1/2] Payment confirmation email failed:', JSON.stringify(confirmationEmailResult.error, null, 2))
           }
           
-          // Wait another 600ms before sending client email
-          await new Promise(resolve => setTimeout(resolve, 600))
+          // Wait another 1.5 seconds before sending client email
+          console.log('⏳ Waiting 1.5 seconds before sending client notification email...')
+          await new Promise(resolve => setTimeout(resolve, 1500))
           
           // Also send client notification if payment is confirmed
-          console.log('📧 Sending client notification email to:', CLIENT_EMAIL)
+          console.log('📧 [2/2] Sending client notification email to:', CLIENT_EMAIL)
           const clientEmailResult = await sendClientOrderNotification(completeOrder)
           if (clientEmailResult.success) {
-            console.log('✅ Client email sent successfully to:', CLIENT_EMAIL)
+            console.log('✅ [2/2] Client email sent successfully to:', CLIENT_EMAIL, 'Resend ID:', clientEmailResult.data?.id)
           } else {
-            console.error('❌ Client email failed:', JSON.stringify(clientEmailResult.error, null, 2))
+            console.error('❌ [2/2] Client email failed:', JSON.stringify(clientEmailResult.error, null, 2))
           }
         } else {
           console.log('⏳ Payment not yet confirmed - confirmation email will be sent via webhook when payment succeeds')
+          console.log('⏳ Current payment_status:', completeOrder.payment_status, '(expected: "paid")')
         }
       } catch (emailError: any) {
         // Log error but don't fail the order creation
