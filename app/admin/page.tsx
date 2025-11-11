@@ -29,7 +29,8 @@ import {
   Truck,
   RefreshCw,
   Settings,
-  BarChart3
+  BarChart3,
+  ChevronUp
 } from 'lucide-react'
 import { motion } from 'framer-motion'
 import ProductForm from '@/components/ProductForm'
@@ -117,6 +118,8 @@ export default function AdminDashboard() {
   const [newBrandName, setNewBrandName] = useState('')
   const [searchTerm, setSearchTerm] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
+  const [productSortColumn, setProductSortColumn] = useState<'name' | 'price' | 'stock' | 'status' | null>(null)
+  const [productSortDirection, setProductSortDirection] = useState<'asc' | 'desc'>('asc')
   const [showAddProduct, setShowAddProduct] = useState(false)
   const [showAddGalleryItem, setShowAddGalleryItem] = useState(false)
   const [editingProduct, setEditingProduct] = useState<Product | null>(null)
@@ -618,11 +621,50 @@ export default function AdminDashboard() {
     }
   }
 
+  const handleProductSort = (column: 'name' | 'price' | 'stock' | 'status') => {
+    if (productSortColumn === column) {
+      // Toggle direction if clicking the same column
+      setProductSortDirection(productSortDirection === 'asc' ? 'desc' : 'asc')
+    } else {
+      // Set new column and default to ascending
+      setProductSortColumn(column)
+      setProductSortDirection('asc')
+    }
+  }
+
   const filteredProducts = products.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          product.category.toLowerCase().includes(searchTerm.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
     return matchesSearch && matchesCategory
+  }).sort((a, b) => {
+    if (!productSortColumn) return 0
+
+    let comparison = 0
+
+    switch (productSortColumn) {
+      case 'name':
+        comparison = a.name.localeCompare(b.name)
+        break
+      case 'price':
+        comparison = a.price - b.price
+        break
+      case 'stock':
+        comparison = a.stock_count - b.stock_count
+        break
+      case 'status':
+        // Active first when ascending, inactive first when descending
+        if (a.status === 'active' && b.status === 'inactive') {
+          comparison = -1
+        } else if (a.status === 'inactive' && b.status === 'active') {
+          comparison = 1
+        } else {
+          comparison = 0
+        }
+        break
+    }
+
+    return productSortDirection === 'asc' ? comparison : -comparison
   })
 
   const statsData = [
@@ -899,20 +941,52 @@ export default function AdminDashboard() {
             <table className="w-full">
               <thead className="bg-secondary-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Product
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-colors"
+                    onClick={() => handleProductSort('name')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Product</span>
+                      {productSortColumn === 'name' && (
+                        <ChevronUp className={`w-4 h-4 transition-transform ${productSortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Category
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Price
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-colors"
+                    onClick={() => handleProductSort('price')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Price</span>
+                      {productSortColumn === 'price' && (
+                        <ChevronUp className={`w-4 h-4 transition-transform ${productSortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Stock
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-colors"
+                    onClick={() => handleProductSort('stock')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Stock</span>
+                      {productSortColumn === 'stock' && (
+                        <ChevronUp className={`w-4 h-4 transition-transform ${productSortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
-                    Status
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider cursor-pointer hover:bg-secondary-100 transition-colors"
+                    onClick={() => handleProductSort('status')}
+                  >
+                    <div className="flex items-center space-x-1">
+                      <span>Status</span>
+                      {productSortColumn === 'status' && (
+                        <ChevronUp className={`w-4 h-4 transition-transform ${productSortDirection === 'desc' ? 'rotate-180' : ''}`} />
+                      )}
+                    </div>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-secondary-500 uppercase tracking-wider">
                     Actions
