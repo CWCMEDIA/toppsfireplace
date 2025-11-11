@@ -853,7 +853,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                     Delivery Outside Free Zone
                   </p>
                   <p className="text-sm text-red-700 mb-3">
-                    Your delivery address is outside our standard delivery zone. Delivery is still free, but we will be in contact within 24 hours to arrange a convenient delivery time.
+                    Your delivery address is outside our free delivery zone. Delivery is not free and we will be in contact within 24 hours to arrange delivery and provide a delivery quote.
                   </p>
                 </div>
               </div>
@@ -865,7 +865,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                   className="mt-1 w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
                 />
                 <span className="text-sm text-red-800 font-medium">
-                  I understand that my address is outside the standard delivery zone and I will be contacted within 24 hours to arrange delivery.
+                  I understand that delivery is not free and I will be contacted within 24 hours to arrange delivery.
                 </span>
               </label>
             </div>
