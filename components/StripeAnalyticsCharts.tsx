@@ -163,9 +163,9 @@ export default function StripeAnalyticsCharts() {
             <div className="flex items-start space-x-3 mb-4">
               <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <h4 className="font-semibold text-secondary-900 mb-2">Test Data Disclaimer</h4>
+                <h4 className="font-semibold text-secondary-900 mb-2">Live Stats Beta Disclaimer</h4>
                 <p className="text-sm text-secondary-700 mb-2">
-                  This data was generated from test payments sent to test the checkout system. This data will be reset when the payment information is updated to live mode.
+                  This data is generated real time and shown to you in these charts. If you see any inconsistancies please let me know
                 </p>
                 <div className="flex items-start space-x-2 p-2 bg-green-50 border border-green-200 rounded text-xs">
                   <CheckCircle className="w-4 h-4 text-green-600 flex-shrink-0 mt-0.5" />
