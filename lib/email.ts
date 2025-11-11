@@ -704,3 +704,150 @@ export async function sendClientOrderNotification(order: Order) {
   }
 }
 
+// Email: Out for Delivery (sent when order status changes to "out_for_delivery")
+export async function sendCustomerOutForDelivery(order: Order, customMessage: string = '') {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set - skipping out for delivery email')
+    return { success: false, error: 'Email service not configured' }
+  }
+
+  try {
+    const itemsList = order.order_items?.map(item => {
+      const productName = item.products?.name || 'Product'
+      return `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${productName}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.unit_price.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.total_price.toFixed(2)}</td>
+        </tr>
+      `
+    }).join('') || ''
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Your Order is Out for Delivery - ${order.order_number}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">🚚 Your Order is Out for Delivery!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">We're on our way</p>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Dear ${order.customer_name},</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              Great news! Your order <strong>${order.order_number}</strong> is now out for delivery and on its way to you.
+            </p>
+
+            <div style="background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+              <h3 style="color: #065f46; margin-top: 0;">📦 Delivery Information</h3>
+              <p style="color: #065f46; margin: 10px 0;">
+                Your order is currently being delivered to:
+              </p>
+              <p style="color: #065f46; margin: 10px 0; padding: 15px; background: white; border-radius: 4px;">
+                ${formatAddress(order.shipping_address)}
+              </p>
+              ${customMessage ? `
+                <div style="margin-top: 15px; padding: 15px; background: white; border-radius: 4px; border-left: 3px solid #10b981;">
+                  <p style="color: #065f46; margin: 0; font-weight: bold;">Additional Information:</p>
+                  <p style="color: #065f46; margin: 10px 0 0 0; white-space: pre-line;">${customMessage}</p>
+                </div>
+              ` : ''}
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #10b981;">
+              <h2 style="color: #10b981; margin-top: 0; font-size: 20px;">Order Details</h2>
+              <p style="margin: 10px 0;"><strong>Order Number:</strong> ${order.order_number}</p>
+              <p style="margin: 10px 0;"><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p style="margin: 10px 0;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">Out for Delivery</span></p>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="color: #10b981; margin-top: 0; font-size: 20px;">Order Items</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                  <tr style="background: #f3f4f6;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;">Product</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Quantity</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Unit Price</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsList}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">Subtotal:</td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">£${order.subtotal.toFixed(2)}</td>
+                  </tr>
+                  ${order.shipping_amount > 0 ? `
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right;">Shipping:</td>
+                    <td style="padding: 12px; text-align: right;">£${order.shipping_amount.toFixed(2)}</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #10b981;">Total:</td>
+                    <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #10b981; color: #10b981;">£${order.total_amount.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1e40af; margin-top: 0;">What to Expect</h3>
+              <ul style="margin: 10px 0; padding-left: 20px; color: #1e40af;">
+                <li style="margin: 8px 0;">Your order should arrive soon</li>
+                <li style="margin: 8px 0;">Please ensure someone is available to receive the delivery</li>
+                <li style="margin: 8px 0;">If you have any questions, contact us at 01702 510222</li>
+              </ul>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Need help? Contact us:</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Phone: 01702 510222</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Email: topsonlineshop@outlook.com</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    if (!order.customer_email || !order.customer_email.includes('@')) {
+      console.error('❌ Invalid customer email address:', order.customer_email)
+      return { success: false, error: 'Invalid email address' }
+    }
+
+    console.log('📧 Out for delivery email details:', {
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Your Order is Out for Delivery - ${order.order_number}`
+    })
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Your Order is Out for Delivery - ${order.order_number}`,
+      html
+    })
+
+    if (error) {
+      console.error('❌ Resend API error sending out for delivery email:', JSON.stringify(error, null, 2))
+      return { success: false, error }
+    }
+
+    console.log('✅ Out for delivery email sent successfully to:', order.customer_email, 'Resend ID:', data?.id)
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error in sendCustomerOutForDelivery:', error)
+    return { success: false, error }
+  }
+}
+

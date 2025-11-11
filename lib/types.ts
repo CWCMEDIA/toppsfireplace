@@ -52,7 +52,7 @@ export interface Order {
   shipping_amount: number
   discount_amount: number
   total_amount: number
-  status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled'
+  status: 'pending' | 'processing' | 'out_for_delivery' | 'shipped' | 'delivered' | 'cancelled'
   payment_status: 'pending' | 'paid' | 'failed' | 'refunded'
   payment_method?: string
   stripe_payment_intent_id?: string

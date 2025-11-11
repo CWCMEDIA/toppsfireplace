@@ -130,6 +130,11 @@ export default function AdminDashboard() {
     productChange: 0,
     activeProductChange: 0
   })
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [selectedOrderForStatus, setSelectedOrderForStatus] = useState<any | null>(null)
+  const [newOrderStatus, setNewOrderStatus] = useState<string>('')
+  const [customDeliveryMessage, setCustomDeliveryMessage] = useState<string>('')
+  const [updatingStatus, setUpdatingStatus] = useState(false)
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -297,6 +302,55 @@ export default function AdminDashboard() {
       toast.error('Failed to fetch orders')
     } finally {
       setOrdersLoading(false)
+    }
+  }
+
+  const handleOpenStatusModal = (order: any, status: string) => {
+    setSelectedOrderForStatus(order)
+    setNewOrderStatus(status)
+    setCustomDeliveryMessage('')
+    setShowStatusModal(true)
+  }
+
+  const handleUpdateOrderStatus = async () => {
+    if (!selectedOrderForStatus || !newOrderStatus) return
+
+    setUpdatingStatus(true)
+    try {
+      const response = await fetch(`/api/orders/${selectedOrderForStatus.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          status: newOrderStatus,
+          customMessage: newOrderStatus === 'out_for_delivery' ? customDeliveryMessage : undefined
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        // Update the order in the local state
+        setOrders(orders.map(order => 
+          order.id === selectedOrderForStatus.id 
+            ? { ...order, status: data.order.status }
+            : order
+        ))
+        toast.success(`Order status updated to ${newOrderStatus.replace(/_/g, ' ')}`)
+        setShowStatusModal(false)
+        setSelectedOrderForStatus(null)
+        setNewOrderStatus('')
+        setCustomDeliveryMessage('')
+      } else {
+        const errorData = await response.json()
+        toast.error(errorData.error || 'Failed to update order status')
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error)
+      toast.error('Failed to update order status')
+    } finally {
+      setUpdatingStatus(false)
     }
   }
 
@@ -1363,13 +1417,14 @@ export default function AdminDashboard() {
                         }
                         break
                       case 'orderStatus':
-                        // Sort by order status: processing > shipped > delivered > pending > cancelled
+                        // Sort by order status: processing > out_for_delivery > shipped > delivered > pending > cancelled
                         const orderStatusOrder: { [key: string]: number } = {
                           'processing': 1,
-                          'shipped': 2,
-                          'delivered': 3,
-                          'pending': 4,
-                          'cancelled': 5
+                          'out_for_delivery': 2,
+                          'shipped': 3,
+                          'delivered': 4,
+                          'pending': 5,
+                          'cancelled': 6
                         }
                         const aOrderStatus = orderStatusOrder[a.status] || 99
                         const bOrderStatus = orderStatusOrder[b.status] || 99
@@ -1422,6 +1477,8 @@ export default function AdminDashboard() {
                     switch (order.status) {
                       case 'processing':
                         return 'bg-blue-100 text-blue-800'
+                      case 'out_for_delivery':
+                        return 'bg-green-100 text-green-800'
                       case 'shipped':
                         return 'bg-purple-100 text-purple-800'
                       case 'delivered':
@@ -1459,10 +1516,19 @@ export default function AdminDashboard() {
                               {getPaymentStatusIcon()}
                               <span className="ml-1 capitalize">{order.payment_status}</span>
                             </span>
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusColor()}`}>
-                              <Truck className="w-3 h-3 mr-1" />
-                              <span className="capitalize">{order.status}</span>
-                            </span>
+                            <div className="flex items-center space-x-2">
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getOrderStatusColor()}`}>
+                                <Truck className="w-3 h-3 mr-1" />
+                                <span className="capitalize">{order.status.replace(/_/g, ' ')}</span>
+                              </span>
+                              <button
+                                onClick={() => handleOpenStatusModal(order, order.status)}
+                                className="p-1 text-secondary-500 hover:text-primary-600 transition-colors"
+                                title="Update order status"
+                              >
+                                <Edit className="w-3 h-3" />
+                              </button>
+                            </div>
                           </div>
                           <p className="text-sm text-secondary-600">
                             {new Date(order.created_at).toLocaleDateString('en-GB', {
@@ -1873,6 +1939,106 @@ export default function AdminDashboard() {
             setActiveTab('orders')
           }}
         />
+      )}
+
+      {/* Update Order Status Modal */}
+      {showStatusModal && selectedOrderForStatus && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-xl font-bold text-secondary-900">Update Order Status</h3>
+              <button
+                onClick={() => {
+                  setShowStatusModal(false)
+                  setSelectedOrderForStatus(null)
+                  setNewOrderStatus('')
+                  setCustomDeliveryMessage('')
+                }}
+                className="text-secondary-500 hover:text-secondary-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="mb-4">
+              <p className="text-sm text-secondary-600 mb-2">
+                Order: <strong>{selectedOrderForStatus.order_number}</strong>
+              </p>
+              <p className="text-sm text-secondary-600 mb-4">
+                Current Status: <span className="capitalize">{selectedOrderForStatus.status.replace(/_/g, ' ')}</span>
+              </p>
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-secondary-700 mb-2">
+                New Status *
+              </label>
+              <select
+                value={newOrderStatus}
+                onChange={(e) => setNewOrderStatus(e.target.value)}
+                className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+              >
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="out_for_delivery">Out for Delivery</option>
+                <option value="shipped">Shipped</option>
+                <option value="delivered">Delivered</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            {newOrderStatus === 'out_for_delivery' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Custom Message (Optional)
+                </label>
+                <p className="text-xs text-secondary-500 mb-2">
+                  Add tracking number, delivery time, or any additional information for the customer
+                </p>
+                <textarea
+                  value={customDeliveryMessage}
+                  onChange={(e) => setCustomDeliveryMessage(e.target.value)}
+                  placeholder="e.g., Tracking Number: ABC123456789, Expected delivery: Tomorrow between 9am-5pm"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            )}
+
+            <div className="flex space-x-3">
+              <button
+                onClick={() => {
+                  setShowStatusModal(false)
+                  setSelectedOrderForStatus(null)
+                  setNewOrderStatus('')
+                  setCustomDeliveryMessage('')
+                }}
+                disabled={updatingStatus}
+                className="flex-1 px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50 transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateOrderStatus}
+                disabled={updatingStatus || !newOrderStatus}
+                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2"
+              >
+                {updatingStatus ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    <span>Updating...</span>
+                  </>
+                ) : (
+                  <span>Update Status</span>
+                )}
+              </button>
+            </div>
+          </motion.div>
+        </div>
       )}
     </div>
   )
