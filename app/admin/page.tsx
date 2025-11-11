@@ -258,7 +258,8 @@ export default function AdminDashboard() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('/api/products')
+      // Fetch all products (both active and inactive) for admin view
+      const response = await fetch('/api/products?status=all')
       const data = await response.json()
       setProducts(data.products || [])
     } catch (error) {

@@ -15,8 +15,12 @@ export async function GET(request: NextRequest) {
     let query = supabaseAdmin
       .from('products')
       .select('*')
-      .eq('status', status)
       .order('created_at', { ascending: false })
+
+    // Only filter by status if not 'all'
+    if (status && status !== 'all') {
+      query = query.eq('status', status)
+    }
 
     if (category && category !== 'all') {
       query = query.eq('category', category)
