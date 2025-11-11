@@ -872,3 +872,300 @@ export async function sendCustomerOutForDelivery(order: Order, customMessage: st
   }
 }
 
+// Email: Order Delivered (sent when order status changes to "delivered")
+export async function sendCustomerDelivered(order: Order) {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set - skipping delivered email')
+    return { success: false, error: 'Email service not configured' }
+  }
+
+  try {
+    const itemsList = order.order_items?.map(item => {
+      const productName = item.products?.name || 'Product'
+      return `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${productName}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.unit_price.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.total_price.toFixed(2)}</td>
+        </tr>
+      `
+    }).join('') || ''
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Order Delivered - ${order.order_number}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #10b981 0%, #34d399 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">✅ Order Delivered!</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">Thank you for your purchase</p>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Dear ${order.customer_name},</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              We're delighted to confirm that your order <strong>${order.order_number}</strong> has been successfully delivered!
+            </p>
+
+            <div style="background: #d1fae5; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #10b981;">
+              <h3 style="color: #065f46; margin-top: 0;">📦 Delivered Items</h3>
+              <p style="color: #065f46; margin: 10px 0;">
+                Your order has been delivered to:
+              </p>
+              <p style="color: #065f46; margin: 10px 0; padding: 15px; background: white; border-radius: 4px;">
+                ${formatAddress(order.shipping_address)}
+              </p>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #10b981;">
+              <h2 style="color: #10b981; margin-top: 0; font-size: 20px;">Order Details</h2>
+              <p style="margin: 10px 0;"><strong>Order Number:</strong> ${order.order_number}</p>
+              <p style="margin: 10px 0;"><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p style="margin: 10px 0;"><strong>Status:</strong> <span style="color: #10b981; font-weight: bold;">Delivered</span></p>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="color: #10b981; margin-top: 0; font-size: 20px;">Order Items</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                  <tr style="background: #f3f4f6;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;">Product</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Quantity</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Unit Price</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsList}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">Subtotal:</td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">£${order.subtotal.toFixed(2)}</td>
+                  </tr>
+                  ${order.shipping_amount > 0 ? `
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right;">Shipping:</td>
+                    <td style="padding: 12px; text-align: right;">£${order.shipping_amount.toFixed(2)}</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #10b981;">Total:</td>
+                    <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #10b981; color: #10b981;">£${order.total_amount.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1e40af; margin-top: 0;">Need Help?</h3>
+              <p style="color: #1e40af; margin: 10px 0;">
+                If you have any questions about your order, need assistance with installation, or have any concerns, we're here to help!
+              </p>
+              <div style="margin-top: 15px;">
+                <p style="color: #1e40af; margin: 5px 0;"><strong>📞 Phone:</strong> <a href="tel:01702510222" style="color: #3b82f6; font-weight: bold;">01702 510222</a></p>
+                <p style="color: #1e40af; margin: 5px 0;"><strong>✉️ Email:</strong> <a href="mailto:topsonlineshop@outlook.com" style="color: #3b82f6; font-weight: bold;">topsonlineshop@outlook.com</a></p>
+              </div>
+            </div>
+
+            <div style="background: #fef3c7; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+              <h3 style="color: #92400e; margin-top: 0;">We'd Love Your Feedback!</h3>
+              <p style="color: #92400e; margin: 10px 0;">
+                Your satisfaction is important to us. If you're happy with your purchase, we'd be grateful if you could leave us a review or share your experience.
+              </p>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Thank you for choosing Tops Fireplaces!</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Phone: 01702 510222</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Email: topsonlineshop@outlook.com</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    if (!order.customer_email || !order.customer_email.includes('@')) {
+      console.error('❌ Invalid customer email address:', order.customer_email)
+      return { success: false, error: 'Invalid email address' }
+    }
+
+    console.log('📧 Delivered email details:', {
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Order Delivered - ${order.order_number}`
+    })
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Order Delivered - ${order.order_number}`,
+      html
+    })
+
+    if (error) {
+      console.error('❌ Resend API error sending delivered email:', JSON.stringify(error, null, 2))
+      return { success: false, error }
+    }
+
+    console.log('✅ Delivered email sent successfully to:', order.customer_email, 'Resend ID:', data?.id)
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error in sendCustomerDelivered:', error)
+    return { success: false, error }
+  }
+}
+
+// Email: Order Cancelled (sent when order status changes to "cancelled")
+export async function sendCustomerCancelled(order: Order, cancellationReason: string = '') {
+  if (!resend) {
+    console.warn('RESEND_API_KEY not set - skipping cancelled email')
+    return { success: false, error: 'Email service not configured' }
+  }
+
+  try {
+    const itemsList = order.order_items?.map(item => {
+      const productName = item.products?.name || 'Product'
+      return `
+        <tr>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb;">${productName}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: center;">${item.quantity}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.unit_price.toFixed(2)}</td>
+          <td style="padding: 12px; border-bottom: 1px solid #e5e7eb; text-align: right;">£${item.total_price.toFixed(2)}</td>
+        </tr>
+      `
+    }).join('') || ''
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Order Cancelled - ${order.order_number}</title>
+        </head>
+        <body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); padding: 30px; text-align: center; border-radius: 8px 8px 0 0;">
+            <h1 style="color: white; margin: 0; font-size: 28px;">Order Cancelled</h1>
+            <p style="color: rgba(255,255,255,0.9); margin: 10px 0 0 0;">We're sorry to inform you</p>
+          </div>
+          
+          <div style="background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px;">
+            <p style="font-size: 16px; margin-bottom: 20px;">Dear ${order.customer_name},</p>
+            
+            <p style="font-size: 16px; margin-bottom: 20px;">
+              We regret to inform you that your order <strong>${order.order_number}</strong> has been cancelled.
+            </p>
+
+            ${cancellationReason ? `
+            <div style="background: #fee2e2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
+              <h3 style="color: #991b1b; margin-top: 0;">Reason for Cancellation</h3>
+              <p style="color: #991b1b; margin: 10px 0; white-space: pre-line;">${cancellationReason}</p>
+            </div>
+            ` : ''}
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #dc2626;">
+              <h2 style="color: #dc2626; margin-top: 0; font-size: 20px;">Order Details</h2>
+              <p style="margin: 10px 0;"><strong>Order Number:</strong> ${order.order_number}</p>
+              <p style="margin: 10px 0;"><strong>Order Date:</strong> ${new Date(order.created_at).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</p>
+              <p style="margin: 10px 0;"><strong>Status:</strong> <span style="color: #dc2626; font-weight: bold;">Cancelled</span></p>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
+              <h2 style="color: #dc2626; margin-top: 0; font-size: 20px;">Cancelled Items</h2>
+              <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
+                <thead>
+                  <tr style="background: #f3f4f6;">
+                    <th style="padding: 12px; text-align: left; border-bottom: 2px solid #e5e7eb;">Product</th>
+                    <th style="padding: 12px; text-align: center; border-bottom: 2px solid #e5e7eb;">Quantity</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Unit Price</th>
+                    <th style="padding: 12px; text-align: right; border-bottom: 2px solid #e5e7eb;">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${itemsList}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">Subtotal:</td>
+                    <td style="padding: 12px; text-align: right; font-weight: bold; border-top: 2px solid #e5e7eb;">£${order.subtotal.toFixed(2)}</td>
+                  </tr>
+                  ${order.shipping_amount > 0 ? `
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right;">Shipping:</td>
+                    <td style="padding: 12px; text-align: right;">£${order.shipping_amount.toFixed(2)}</td>
+                  </tr>
+                  ` : ''}
+                  <tr>
+                    <td colspan="3" style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #dc2626;">Total:</td>
+                    <td style="padding: 12px; text-align: right; font-size: 18px; font-weight: bold; border-top: 2px solid #dc2626; color: #dc2626;">£${order.total_amount.toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+
+            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1e40af; margin-top: 0;">Refund Information</h3>
+              <p style="color: #1e40af; margin: 10px 0;">
+                If payment was already processed, a refund will be issued to your original payment method. Refunds typically take 5-10 business days to appear in your account.
+              </p>
+            </div>
+
+            <div style="background: #eff6ff; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #3b82f6;">
+              <h3 style="color: #1e40af; margin-top: 0;">Need Help?</h3>
+              <p style="color: #1e40af; margin: 10px 0;">
+                If you have any questions about this cancellation or would like to discuss alternative options, please don't hesitate to contact us.
+              </p>
+              <div style="margin-top: 15px;">
+                <p style="color: #1e40af; margin: 5px 0;"><strong>📞 Phone:</strong> <a href="tel:01702510222" style="color: #3b82f6; font-weight: bold;">01702 510222</a></p>
+                <p style="color: #1e40af; margin: 5px 0;"><strong>✉️ Email:</strong> <a href="mailto:topsonlineshop@outlook.com" style="color: #3b82f6; font-weight: bold;">topsonlineshop@outlook.com</a></p>
+              </div>
+            </div>
+
+            <div style="text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">We apologize for any inconvenience.</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Phone: 01702 510222</p>
+              <p style="color: #6b7280; font-size: 14px; margin: 5px 0;">Email: topsonlineshop@outlook.com</p>
+            </div>
+          </div>
+        </body>
+      </html>
+    `
+
+    if (!order.customer_email || !order.customer_email.includes('@')) {
+      console.error('❌ Invalid customer email address:', order.customer_email)
+      return { success: false, error: 'Invalid email address' }
+    }
+
+    console.log('📧 Cancelled email details:', {
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Order Cancelled - ${order.order_number}`
+    })
+
+    const { data, error } = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: order.customer_email,
+      subject: `Order Cancelled - ${order.order_number}`,
+      html
+    })
+
+    if (error) {
+      console.error('❌ Resend API error sending cancelled email:', JSON.stringify(error, null, 2))
+      return { success: false, error }
+    }
+
+    console.log('✅ Cancelled email sent successfully to:', order.customer_email, 'Resend ID:', data?.id)
+    return { success: true, data }
+  } catch (error) {
+    console.error('Error in sendCustomerCancelled:', error)
+    return { success: false, error }
+  }
+}
+

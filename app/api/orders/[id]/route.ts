@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
-import { sendCustomerOutForDelivery } from '@/lib/email'
+import { sendCustomerOutForDelivery, sendCustomerDelivered, sendCustomerCancelled } from '@/lib/email'
 import { withSecurity, validateRequestBody, sanitizeInput } from '@/lib/api-security'
 import { secureErrorResponse, secureSuccessResponse } from '@/lib/security'
 
@@ -118,25 +118,36 @@ async function handleUpdateOrder(request: NextRequest, params: { id: string }) {
       return secureErrorResponse('Failed to update order', 500)
     }
 
-    // If status changed to "out_for_delivery", send email to customer
-    if (status === 'out_for_delivery' && currentOrder.status !== 'out_for_delivery') {
+    // Send emails based on status change
+    if (status !== currentOrder.status) {
       try {
         // Verify we have the required customer email before sending
         if (!updatedOrder.customer_email || !updatedOrder.customer_email.includes('@')) {
-          console.error('❌ Cannot send out for delivery email: Invalid customer email:', updatedOrder.customer_email)
+          console.error('❌ Cannot send email: Invalid customer email:', updatedOrder.customer_email)
           // Don't fail the status update, just log the error
         } else {
-          console.log('📧 Sending out for delivery email to:', updatedOrder.customer_email, 'Order:', updatedOrder.order_number)
-          const emailResult = await sendCustomerOutForDelivery(updatedOrder, customMessage || '')
-          if (!emailResult.success) {
-            console.error('❌ Failed to send out for delivery email:', emailResult.error)
+          let emailResult
+          
+          if (status === 'out_for_delivery' && currentOrder.status !== 'out_for_delivery') {
+            console.log('📧 Sending out for delivery email to:', updatedOrder.customer_email, 'Order:', updatedOrder.order_number)
+            emailResult = await sendCustomerOutForDelivery(updatedOrder, customMessage || '')
+          } else if (status === 'delivered' && currentOrder.status !== 'delivered') {
+            console.log('📧 Sending delivered email to:', updatedOrder.customer_email, 'Order:', updatedOrder.order_number)
+            emailResult = await sendCustomerDelivered(updatedOrder)
+          } else if (status === 'cancelled' && currentOrder.status !== 'cancelled') {
+            console.log('📧 Sending cancelled email to:', updatedOrder.customer_email, 'Order:', updatedOrder.order_number)
+            emailResult = await sendCustomerCancelled(updatedOrder, customMessage || '')
+          }
+          
+          if (emailResult && !emailResult.success) {
+            console.error('❌ Failed to send email:', emailResult.error)
             // Don't fail the status update if email fails, just log it
-          } else {
-            console.log('✅ Out for delivery email sent successfully')
+          } else if (emailResult) {
+            console.log('✅ Email sent successfully')
           }
         }
       } catch (emailError) {
-        console.error('❌ Error sending out for delivery email:', emailError)
+        console.error('❌ Error sending email:', emailError)
         // Don't fail the status update if email fails
       }
     }

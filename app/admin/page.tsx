@@ -329,7 +329,7 @@ export default function AdminDashboard() {
         credentials: 'include',
         body: JSON.stringify({
           status: newOrderStatus,
-          customMessage: newOrderStatus === 'out_for_delivery' ? customDeliveryMessage : undefined
+          customMessage: (newOrderStatus === 'out_for_delivery' || newOrderStatus === 'cancelled') ? customDeliveryMessage : undefined
         })
       })
 
@@ -2054,7 +2054,13 @@ export default function AdminDashboard() {
               </label>
               <select
                 value={newOrderStatus}
-                onChange={(e) => setNewOrderStatus(e.target.value)}
+                onChange={(e) => {
+                  setNewOrderStatus(e.target.value)
+                  // Reset custom message if switching to a status that doesn't need it
+                  if (e.target.value !== 'out_for_delivery' && e.target.value !== 'cancelled') {
+                    setCustomDeliveryMessage('')
+                  }
+                }}
                 className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="pending">Pending</option>
@@ -2078,6 +2084,23 @@ export default function AdminDashboard() {
                   value={customDeliveryMessage}
                   onChange={(e) => setCustomDeliveryMessage(e.target.value)}
                   placeholder="e.g., Tracking Number: ABC123456789, Expected delivery: Tomorrow between 9am-5pm"
+                  rows={4}
+                  className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                />
+              </div>
+            )}
+            {newOrderStatus === 'cancelled' && (
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-secondary-700 mb-2">
+                  Cancellation Reason (Optional)
+                </label>
+                <p className="text-xs text-secondary-500 mb-2">
+                  Explain the reason for cancellation to the customer. This will be included in the cancellation email.
+                </p>
+                <textarea
+                  value={customDeliveryMessage}
+                  onChange={(e) => setCustomDeliveryMessage(e.target.value)}
+                  placeholder="e.g., Item out of stock, Customer requested cancellation, Payment issue, etc."
                   rows={4}
                   className="w-full px-3 py-2 border border-secondary-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
