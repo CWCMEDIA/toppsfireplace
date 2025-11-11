@@ -53,7 +53,8 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
   } | null>(null)
   const [customerEmail, setCustomerEmail] = useState('')
   const [customerName, setCustomerName] = useState('')
-  const [requiresDeliveryQuote, setRequiresDeliveryQuote] = useState(false)
+  // Default to true (needs quote) until address is checked and confirmed in-range
+  const [requiresDeliveryQuote, setRequiresDeliveryQuote] = useState(true)
   const [initializationError, setInitializationError] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [retryCount, setRetryCount] = useState(0)
@@ -852,7 +853,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                     Delivery Outside Free Zone
                   </p>
                   <p className="text-sm text-red-700 mb-3">
-                    Your delivery address is outside our free delivery zone. Delivery is not free and we will be in contact within 24 hours to arrange delivery and provide a delivery quote.
+                    Your delivery address is outside our standard delivery zone. Delivery is still free, but we will be in contact within 24 hours to arrange a convenient delivery time.
                   </p>
                 </div>
               </div>
@@ -864,7 +865,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                   className="mt-1 w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
                 />
                 <span className="text-sm text-red-800 font-medium">
-                  I understand that delivery is not free and I will be contacted within 24 hours to arrange delivery.
+                  I understand that my address is outside the standard delivery zone and I will be contacted within 24 hours to arrange delivery.
                 </span>
               </label>
             </div>
@@ -1012,7 +1013,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                 </div>
                 <div className="flex justify-between text-secondary-600">
                   <span>Delivery</span>
-                  <span>{propValidatedTotals.delivery === 0 ? 'Free' : `£${propValidatedTotals.delivery.toFixed(2)}`}</span>
+                  <span>Free</span>
                 </div>
                 <div className="flex justify-between text-lg font-semibold text-secondary-900 pt-2 border-t">
                   <span>Total</span>

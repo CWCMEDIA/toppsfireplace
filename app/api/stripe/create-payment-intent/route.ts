@@ -89,12 +89,9 @@ async function handleCreatePaymentIntent(request: NextRequest) {
     }
 
     // Calculate delivery (server-side)
-    // If requires delivery quote (outside 20 miles), set delivery to 0 for now
-    // Customer will be contacted for quote after order
-    let deliveryAmount = 0
-    if (!requiresDeliveryQuote) {
-      deliveryAmount = subtotal > DELIVERY_THRESHOLD ? 0 : DELIVERY_COST
-    }
+    // Delivery is always FREE (£0) - regardless of address, price, or distance
+    // If address is outside 20 miles, disclaimer will show but delivery is still free
+    const deliveryAmount = 0
     const totalAmount = subtotal + deliveryAmount
 
     // Create payment intent with validated amount
