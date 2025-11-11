@@ -111,8 +111,10 @@ export default function CartPage() {
     }
     return sum
   }, 0)
-  const delivery = subtotal > 500 ? 0 : 50
-  const total = subtotal + delivery
+  // Delivery is calculated at checkout based on address distance
+  // Don't show delivery fee on cart page - it will be calculated after address is entered
+  const delivery = null // Will be calculated at checkout
+  const total = subtotal // Only show subtotal on cart page
 
   if (items.length === 0) {
     return (
@@ -253,8 +255,8 @@ export default function CartPage() {
                 
                 <div className="flex justify-between">
                   <span className="text-secondary-600">Delivery</span>
-                  <span className="font-medium">
-                    {delivery === 0 ? 'Free' : `£${delivery.toFixed(2)}`}
+                  <span className="font-medium text-secondary-500 italic">
+                    Calculated at checkout
                   </span>
                 </div>
                 
@@ -265,9 +267,12 @@ export default function CartPage() {
                 
                 <div className="border-t border-secondary-200 pt-4">
                   <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
+                    <span>Subtotal</span>
                     <span>£{total.toFixed(2)}</span>
                   </div>
+                  <p className="text-xs text-secondary-500 mt-1">
+                    Delivery will be calculated at checkout
+                  </p>
                 </div>
               </div>
 
