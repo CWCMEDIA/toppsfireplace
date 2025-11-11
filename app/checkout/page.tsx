@@ -1030,7 +1030,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={
+        disabled={!!(
           !stripe || 
           !elements || 
           !clientSecret || 
@@ -1038,7 +1038,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
           hasOutOfStockItems || 
           !propValidatedTotals ||
           (deliveryCheck && !deliveryCheck.checking && !deliveryCheck.withinRadius && !deliveryDisclaimerAccepted)
-        }
+        )}
         className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         {isProcessing ? (
