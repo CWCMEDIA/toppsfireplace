@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { supabaseAdmin } from '@/lib/supabase'
 import { verifyAdmin } from '@/lib/admin-auth'
 import { sendCustomerOutForDelivery } from '@/lib/email'
+import { withSecurity, validateRequestBody, sanitizeInput } from '@/lib/api-security'
+import { secureErrorResponse, secureSuccessResponse } from '@/lib/security'
 
 // GET /api/orders/[id] - Get single order (public, for order confirmation)
 export async function GET(
@@ -40,27 +42,26 @@ export async function GET(
 }
 
 // PUT /api/orders/[id] - Update order status (Admin only)
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+async function handleUpdateOrder(request: NextRequest, params: { id: string }) {
   try {
-    // Verify admin authentication
-    const authResult = await verifyAdmin(request)
-    if (!authResult.isValid) {
-      return NextResponse.json({ error: authResult.error }, { status: 401 })
-    }
-
     const body = await request.json()
-    const { status, customMessage } = body
+    
+    // Sanitize input
+    const sanitizedBody = sanitizeInput(body, 2000)
+    const { status, customMessage } = sanitizedBody
 
-    // Validate status
-    const validStatuses = ['pending', 'processing', 'out_for_delivery', 'shipped', 'delivered', 'cancelled']
-    if (!status || !validStatuses.includes(status)) {
-      return NextResponse.json(
-        { error: 'Invalid status. Must be one of: ' + validStatuses.join(', ') },
-        { status: 400 }
-      )
+    // Validate request body
+    const validation = validateRequestBody(
+      sanitizedBody,
+      ['status'],
+      {
+        status: (val) => typeof val === 'string' && ['pending', 'processing', 'out_for_delivery', 'shipped', 'delivered', 'cancelled'].includes(val),
+        customMessage: (val) => !val || (typeof val === 'string' && val.length <= 1000)
+      }
+    )
+    
+    if (!validation.valid) {
+      return secureErrorResponse(validation.error || 'Invalid status. Must be one of: pending, processing, out_for_delivery, shipped, delivered, cancelled', 400)
     }
 
     // Get current order to check if we need to send email
@@ -85,7 +86,7 @@ export async function PUT(
       .single()
 
     if (fetchError || !currentOrder) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 })
+      return secureErrorResponse('Order not found', 404)
     }
 
     // Update order status
@@ -114,34 +115,50 @@ export async function PUT(
       .single()
 
     if (updateError) {
-      console.error('Error updating order:', updateError)
-      return NextResponse.json(
-        { error: updateError.message || 'Failed to update order' },
-        { status: 500 }
-      )
+      return secureErrorResponse('Failed to update order', 500)
     }
 
     // If status changed to "out_for_delivery", send email to customer
     if (status === 'out_for_delivery' && currentOrder.status !== 'out_for_delivery') {
       try {
-        const emailResult = await sendCustomerOutForDelivery(updatedOrder, customMessage || '')
-        if (!emailResult.success) {
-          console.error('Failed to send out for delivery email:', emailResult.error)
-          // Don't fail the status update if email fails, just log it
+        // Verify we have the required customer email before sending
+        if (!updatedOrder.customer_email || !updatedOrder.customer_email.includes('@')) {
+          console.error('❌ Cannot send out for delivery email: Invalid customer email:', updatedOrder.customer_email)
+          // Don't fail the status update, just log the error
+        } else {
+          console.log('📧 Sending out for delivery email to:', updatedOrder.customer_email, 'Order:', updatedOrder.order_number)
+          const emailResult = await sendCustomerOutForDelivery(updatedOrder, customMessage || '')
+          if (!emailResult.success) {
+            console.error('❌ Failed to send out for delivery email:', emailResult.error)
+            // Don't fail the status update if email fails, just log it
+          } else {
+            console.log('✅ Out for delivery email sent successfully')
+          }
         }
       } catch (emailError) {
-        console.error('Error sending out for delivery email:', emailError)
+        console.error('❌ Error sending out for delivery email:', emailError)
         // Don't fail the status update if email fails
       }
     }
 
-    return NextResponse.json({ order: updatedOrder }, { status: 200 })
+    return secureSuccessResponse({ order: updatedOrder })
   } catch (error: any) {
-    console.error('Error in PUT /api/orders/[id]:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return secureErrorResponse('Internal server error', 500)
   }
+}
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  return withSecurity(
+    (req) => handleUpdateOrder(req, params),
+    {
+      requireAuth: true,
+      requireHTTPS: true,
+      validateOrigin: true,
+      maxBodySize: 5000
+    }
+  )(request)
 }
 

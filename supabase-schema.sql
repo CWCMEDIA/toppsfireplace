@@ -56,7 +56,7 @@ CREATE TABLE orders (
   shipping_amount DECIMAL(10,2) DEFAULT 0.00,
   discount_amount DECIMAL(10,2) DEFAULT 0.00,
   total_amount DECIMAL(10,2) NOT NULL,
-  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'shipped', 'delivered', 'cancelled')),
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'out_for_delivery', 'shipped', 'delivered', 'cancelled')),
   payment_status VARCHAR(20) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
   payment_method VARCHAR(50),
   stripe_payment_intent_id VARCHAR(255),
