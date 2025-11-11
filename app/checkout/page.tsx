@@ -6,7 +6,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { loadStripe } from '@stripe/stripe-js'
 import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { ArrowLeft, CreditCard, Truck, Shield } from 'lucide-react'
+import { ArrowLeft, CreditCard, Truck, Shield, CheckCircle, AlertCircle } from 'lucide-react'
 import Image from 'next/image'
 import toast from 'react-hot-toast'
 import { getCart, clearCart } from '@/lib/cart'
@@ -56,6 +56,7 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
   const [requiresDeliveryQuote, setRequiresDeliveryQuote] = useState(false)
   const [initializationError, setInitializationError] = useState<string | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
+  const [retryCount, setRetryCount] = useState(0)
 
   // Create payment intent immediately when page loads (standard practice)
   // This allows PaymentElement to render right away - no waiting for customer info
@@ -71,6 +72,12 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
       if (clientSecret) {
         setIsInitializing(false)
         return
+      }
+
+      // Add delay for retries to avoid rate limiting
+      if (retryCount > 0) {
+        const delay = Math.min(1000 * Math.pow(2, retryCount - 1), 5000) // Exponential backoff, max 5 seconds
+        await new Promise(resolve => setTimeout(resolve, delay))
       }
 
       setIsInitializing(true)
@@ -100,13 +107,27 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
           try {
             const error = await response.json()
             errorMessage = error.error || errorMessage
+            
+            // Handle rate limit errors specifically
+            if (errorMessage.toLowerCase().includes('rate limit') || response.status === 429) {
+              errorMessage = 'Too many requests. Please wait a moment and refresh the page.'
+            }
+            
             console.error('Failed to initialize payment:', error)
           } catch (parseError) {
             console.error('Failed to parse error response:', parseError)
-            errorMessage = `Server error (${response.status}). Please try again.`
+            if (response.status === 429) {
+              errorMessage = 'Too many requests. Please wait a moment and refresh the page.'
+            } else {
+              errorMessage = `Server error (${response.status}). Please try again.`
+            }
           }
           setInitializationError(errorMessage)
           setIsInitializing(false)
+          // Don't increment retry count on rate limit - user should wait
+          if (!errorMessage.toLowerCase().includes('rate limit') && response.status !== 429) {
+            setRetryCount(prev => prev + 1)
+          }
           return
         }
 
@@ -119,17 +140,19 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
           total: data.total
         })
         setIsInitializing(false)
+        setRetryCount(0) // Reset retry count on success
       } catch (error: any) {
         console.error('Error creating payment intent:', error)
         setInitializationError('Network error. Please check your connection and try again.')
         setIsInitializing(false)
+        setRetryCount(prev => prev + 1)
       }
     }
 
     // Add timeout to prevent infinite loading
     const timeout = setTimeout(() => {
       if (!clientSecret) {
-        setInitializationError('Checkout initialization is taking longer than expected. Please refresh the page.')
+        setInitializationError('Checkout initialization is taking longer than expected. Please try again.')
         setIsInitializing(false)
       }
     }, 30000) // 30 second timeout
@@ -197,12 +220,84 @@ function CheckoutFormWrapper({ cartItems, onOrderComplete, hasOutOfStockItems = 
             </div>
             <p className="text-secondary-800 font-semibold mb-2">Unable to initialize checkout</p>
             <p className="text-secondary-600 mb-4">{initializationError || 'An error occurred. Please try again.'}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="btn-primary"
-            >
-              Refresh Page
-            </button>
+            <div className="flex space-x-3">
+              <button
+                onClick={async () => {
+                  setRetryCount(0)
+                  setInitializationError(null)
+                  setIsInitializing(true)
+                  
+                  // Manually trigger payment intent creation
+                  if (cartItems.length === 0 || hasOutOfStockItems) {
+                    setInitializationError('Cart is empty or contains out-of-stock items')
+                    setIsInitializing(false)
+                    return
+                  }
+
+                  try {
+                    const response = await fetch('/api/stripe/create-payment-intent', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json'
+                      },
+                      credentials: 'include',
+                      body: JSON.stringify({
+                        items: cartItems.map(item => ({
+                          id: item.id,
+                          quantity: item.quantity
+                        })),
+                        customerEmail: customerEmail || undefined,
+                        customerName: customerName || undefined,
+                        requiresDeliveryQuote
+                      })
+                    })
+
+                    if (!response.ok) {
+                      let errorMessage = 'Failed to initialize payment. Please try again.'
+                      try {
+                        const error = await response.json()
+                        errorMessage = error.error || errorMessage
+                        if (errorMessage.toLowerCase().includes('rate limit') || response.status === 429) {
+                          errorMessage = 'Too many requests. Please wait a moment and try again.'
+                        }
+                      } catch {
+                        if (response.status === 429) {
+                          errorMessage = 'Too many requests. Please wait a moment and try again.'
+                        }
+                      }
+                      setInitializationError(errorMessage)
+                      setIsInitializing(false)
+                      return
+                    }
+
+                    const data = await response.json()
+                    setClientSecret(data.clientSecret)
+                    setPaymentIntentId(data.paymentIntentId)
+                    setValidatedTotals({
+                      subtotal: data.subtotal,
+                      delivery: data.delivery,
+                      total: data.total
+                    })
+                    setIsInitializing(false)
+                    setRetryCount(0)
+                  } catch (error: any) {
+                    console.error('Error creating payment intent:', error)
+                    setInitializationError('Network error. Please check your connection and try again.')
+                    setIsInitializing(false)
+                  }
+                }}
+                className="btn-primary"
+                disabled={isInitializing}
+              >
+                {isInitializing ? 'Retrying...' : 'Try Again'}
+              </button>
+              <button
+                onClick={() => window.location.reload()}
+                className="px-4 py-2 border border-secondary-300 rounded-lg text-secondary-700 hover:bg-secondary-50"
+              >
+                Refresh Page
+              </button>
+            </div>
           </>
         )}
       </div>
@@ -311,6 +406,7 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
     message: string
     checking: boolean
   } | null>(null)
+  const [deliveryDisclaimerAccepted, setDeliveryDisclaimerAccepted] = useState(false)
   const [customerInfo, setCustomerInfo] = useState({
     email: '',
     name: '',
@@ -489,17 +585,26 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
         })
 
         if (response.ok) {
-          const data = await response.json()
+          const responseData = await response.json()
+          // Handle both wrapped and unwrapped responses
+          const data = responseData.data || responseData
           const withinRadius = data.withinRadius
+          const distanceMiles = data.distanceMiles
+          const message = data.message
+          
+          console.log('Delivery check result:', { withinRadius, distanceMiles, message })
+          
           setDeliveryCheck({
-            distanceMiles: data.distanceMiles,
-            withinRadius,
-            message: data.message,
+            distanceMiles: distanceMiles || 0,
+            withinRadius: withinRadius === false ? false : (withinRadius === true ? true : false),
+            message: message || (withinRadius ? 'Free delivery available' : 'Delivery outside free zone'),
             checking: false
           })
           // Notify parent to update payment intent
           onDeliveryQuoteChange?.(!withinRadius)
         } else {
+          const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+          console.error('Delivery check failed:', errorData)
           setDeliveryCheck(null)
           onDeliveryQuoteChange?.(false)
         }
@@ -513,6 +618,16 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
     const timeoutId = setTimeout(checkDelivery, 1000)
     return () => clearTimeout(timeoutId)
   }, [customerInfo.address.line1, customerInfo.address.city, customerInfo.address.postal_code, customerInfo.address.state, onDeliveryQuoteChange])
+
+  // Reset disclaimer acceptance when address becomes in-range or address changes
+  useEffect(() => {
+    if (deliveryCheck && deliveryCheck.withinRadius) {
+      setDeliveryDisclaimerAccepted(false)
+    } else if (!deliveryCheck || deliveryCheck.checking) {
+      // Reset when checking or no delivery check yet
+      setDeliveryDisclaimerAccepted(false)
+    }
+  }, [deliveryCheck])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -706,16 +821,56 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
                 <p className="text-sm text-secondary-600">Checking delivery distance...</p>
               </div>
             ) : (
-              <div>
-                <p className={`text-sm font-medium ${
-                  deliveryCheck.withinRadius ? 'text-green-700' : 'text-yellow-700'
-                }`}>
-                  {deliveryCheck.message}
-                </p>
+              <div className="flex items-start space-x-2">
+                {deliveryCheck.withinRadius ? (
+                  <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
+                ) : (
+                  <AlertCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                )}
+                <div className="flex-1">
+                  <p className={`text-sm font-medium ${
+                    deliveryCheck.withinRadius ? 'text-green-700' : 'text-yellow-700'
+                  }`}>
+                    {deliveryCheck.withinRadius 
+                      ? 'Your address is valid for free delivery!' 
+                      : deliveryCheck.message}
+                  </p>
+                </div>
               </div>
             )}
           </div>
         )}
+
+        {/* Delivery Disclaimer for Out-of-Range Addresses */}
+        {deliveryCheck && !deliveryCheck.checking && !deliveryCheck.withinRadius && (
+          <div className="mb-4 p-4 bg-red-50 border-2 border-red-200 rounded-lg">
+            <div className="space-y-3">
+              <div className="flex items-start space-x-2">
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-sm font-semibold text-red-800 mb-2">
+                    Delivery Outside Free Zone
+                  </p>
+                  <p className="text-sm text-red-700 mb-3">
+                    Your delivery address is outside our free delivery zone. Delivery is not free and we will be in contact within 24 hours to arrange delivery and provide a delivery quote.
+                  </p>
+                </div>
+              </div>
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={deliveryDisclaimerAccepted}
+                  onChange={(e) => setDeliveryDisclaimerAccepted(e.target.checked)}
+                  className="mt-1 w-4 h-4 text-primary-600 border-secondary-300 rounded focus:ring-primary-500"
+                />
+                <span className="text-sm text-red-800 font-medium">
+                  I understand that delivery is not free and I will be contacted within 24 hours to arrange delivery.
+                </span>
+              </label>
+            </div>
+          </div>
+        )}
+
         <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-secondary-700 mb-2">
@@ -875,7 +1030,15 @@ function CheckoutForm({ cartItems, onOrderComplete, hasOutOfStockItems = false, 
       {/* Submit Button */}
       <button
         type="submit"
-        disabled={!stripe || !elements || !clientSecret || isProcessing || hasOutOfStockItems || !propValidatedTotals}
+        disabled={
+          !stripe || 
+          !elements || 
+          !clientSecret || 
+          isProcessing || 
+          hasOutOfStockItems || 
+          !propValidatedTotals ||
+          (deliveryCheck && !deliveryCheck.checking && !deliveryCheck.withinRadius && !deliveryDisclaimerAccepted)
+        }
         className="w-full bg-primary-600 text-white py-3 px-6 rounded-lg font-medium hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         {isProcessing ? (

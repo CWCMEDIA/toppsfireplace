@@ -135,7 +135,7 @@ async function handleCreatePaymentIntent(request: NextRequest) {
 
 // Export with security wrapper
 export const POST = withSecurity(handleCreatePaymentIntent, {
-  rateLimit: { maxRequests: 20, windowMs: 60000 }, // 20 requests per minute
+  rateLimit: { maxRequests: 30, windowMs: 60000 }, // 30 requests per minute (increased for refresh tolerance)
   requireHTTPS: true,
   validateOrigin: true,
   maxBodySize: 100000 // 100KB max
